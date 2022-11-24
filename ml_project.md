@@ -1,5 +1,5 @@
 # Musicology Lab
-Johannes ??? & Zeng Ren
+Johannes Hentschel & Zeng Ren
 
 Big project: 1.6 bn scores (what score ?)
 
