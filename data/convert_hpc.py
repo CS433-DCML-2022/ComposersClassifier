@@ -76,7 +76,7 @@ def process_chunk(low, high):
      
 def main():
     ray.init(ignore_reinit_error=True)
-    files=os.listdir(DATA_FOLDER)
+    files = MSCZ_FILENAMES
     n=len(files)
     futures = [process_chunk.remote(i*(n//NB_THREADS),min((i+1)*(n//NB_THREADS),n)) for i in range (NB_THREADS)]
     returns = ray.get(futures)
