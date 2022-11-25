@@ -4,7 +4,7 @@ import ray
 
 ### Arch-Dependant parameters to check
 
-DATA_FOLDER = os.path.abspath('./mscz') 
+DATA_FOLDER = os.path.abspath('./mscz')
 # DATA_FOLDER = os.path.abspath('/scratch/data/musescore.com/') # on the HPC: /scratch/data/musescore.com/
 MUSESCORE_CMD = ms3.get_musescore('auto')
 # MUSESCORE_CMD = "/usr/local/bin/AppImg???"
@@ -49,10 +49,10 @@ def process_chunk(low, high):
             continue
         tsv_name = f"{ID}.tsv"
         dataframes = dict(
-        events = parsed.mscx.events,
-        notes = parsed.mscx.notes,
-        measures = parsed.mscx.measures,
-        labels = parsed.mscx.labels,
+        events = parsed.mscx.events(),
+        notes = parsed.mscx.notes(),
+        measures = parsed.mscx.measures(),
+        labels = parsed.mscx.labels(),
         )
         for facet, df in dataframes.items():
             if df is None:
@@ -70,10 +70,10 @@ def process_chunk(low, high):
         metafile_path = os.path.join(OUTPUT_PATHS['metadata'], ID+'.txt')
         f=open(metafile_path, 'w')
         f.write(str(metadata)) # Could be cleaner
-        f.close()            
+        f.close()
     return fails, composer_known
-        
-     
+
+
 def main():
     ray.init(ignore_reinit_error=True)
     files = MSCZ_FILENAMES
@@ -97,6 +97,6 @@ def main():
     log = open("log.txt", 'a')
     log.write(f"% failed: {100*len(failset)/n}, % with composer known: {100*len(composerknownset)/n}")
     log.close()
-    
+
 if __name__ == "__main__":
     main()
