@@ -63,12 +63,12 @@ def process_chunk(low, high):
         metadata['id'] = ID
         if metadata['composer'] != '':
             compo_file=os.path.join(COMPOSERS_PATH, ID)
-            f=open(compo_file,'a')
+            f=open(compo_file,'w')
             f.write(metadata['composer'])
             f.close()
             composer_known.append(ID)
         metafile_path = os.path.join(OUTPUT_PATHS['metadata'], ID+'.txt')
-        f=open(metafile_path, 'a')
+        f=open(metafile_path, 'w')
         f.write(str(metadata)) # Could be cleaner
         f.close()            
     return fails, composer_known
@@ -88,14 +88,14 @@ def main():
             failset.add(i)
         for i in composerknownlist:
             composerknownset.add(i)
-    f = open("failed_IDs", 'a')
+    f = open("failed_IDs", 'w')
     f.write("\n".join(failset))
     f.close()
-    f = open("known_composers_IDs", 'a')
+    f = open("known_composers_IDs", 'w')
     f.write("\n".join(composerknownset))
     f.close()
     log = open("log.txt", 'a')
-    log.write("% failed: {100*len(failset)/n}, % with composer known: {100*len(composerknownset)/n}")
+    log.write(f"% failed: {100*len(failset)/n}, % with composer known: {100*len(composerknownset)/n}")
     log.close()
     
 if __name__ == "__main__":
