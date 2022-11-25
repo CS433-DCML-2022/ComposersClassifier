@@ -83,10 +83,10 @@ def main():
     
     for l in composerknownlist:
         for i in l:
-            composer_known.add(i)
+            composerknownset.add(i)
     f = open("known_composers_IDs", 'a')
-    f.write("\n".join(composer_known))
-    print(f"% failed: {100*len(faillist)/n}, % with composer known: {100*len(composer_known)/n}")
+    f.write("\n".join(composerknownset))
+    print(f"% failed: {100*len(faillist)/n}, % with composer known: {100*len(composerknownlist)/n}")
     
         
 if __name__ == "__main__":
