@@ -77,8 +77,9 @@ def process_chunk(low, high):
 def main():
     ray.init(ignore_reinit_error=True)
     files = MSCZ_FILENAMES
-    n=len(files)
-    futures = [process_chunk.remote(i*(n//NB_THREADS),min((i+1)*(n//NB_THREADS),n)) for i in range (NB_THREADS)]
+    n_files=len(files)
+    chunk_size = n_files//NB_THREADS
+    futures = [process_chunk.remote(i*chunk_size,min((i+1)*chunk_size,n_files)) for i in range (NB_THREADS)]
     returns = ray.get(futures)
     failset = set()
     composerknownset = set()
@@ -94,7 +95,7 @@ def main():
     f.write("\n".join(composerknownset))
     f.close()
     log = open("log.txt", 'a')
-    log.write(f"% failed: {100*len(failset)/n}, % with composer known: {100*len(composerknownset)/n}")
+    log.write(f"% failed: {100*len(failset)/n_files}, % with composer known: {100*len(composerknownset)/n_files}")
     log.close()
 
 if __name__ == "__main__":
