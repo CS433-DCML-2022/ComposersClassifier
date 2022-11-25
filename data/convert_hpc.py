@@ -19,7 +19,7 @@ for dir in [CONVERSION_FOLDER,OUTPUT_PATHS['events'],OUTPUT_PATHS['notes'],OUTPU
         os.makedirs(dir)
 
 
-musescore_cmd = ms3.get_musescore('auto')
+musescore_cmd = "/home/erwan/.local/bin/MuseScore-3.6.2.548021370-x86_64.AppImage" #ms3.get_musescore('auto')
 threads=32
 filenames=os.listdir(DATA_FOLDER)
 
@@ -38,8 +38,11 @@ def process_chunk(low, high):
         if result.returncode!=0:
             fails.append(ID)
             continue
-            
-        parsed = ms3.Score(converted_file_path, read_only=True)
+        try:
+            parsed = ms3.Score(converted_file_path, read_only=True)
+        except:
+            fails.append(ID)
+            continue
         tsv_name = f"{ID}.tsv"
         dataframes = dict(
         events = parsed.mscx.events,
@@ -70,23 +73,24 @@ def process_chunk(low, high):
 def main():
     ray.init(ignore_reinit_error=True)
     files=os.listdir(DATA_FOLDER)
-    n=len(files)
+    n=len(files)//10
     futures = [process_chunk.remote(i*(n//threads),min((i+1)*(n//threads),n)) for i in range (threads)]
-    faillist, composerknownlist =ray.get(futures)
+    returns = ray.get(futures)
     failset = set()
     composerknownset = set()
-    for l in faillist:
-        for i in l:
+    for item in returns:
+        faillist, composerknownlist = item
+        for i in faillist:
             failset.add(i)
+        for i in composerknownlist:
+            composerknownset.add(i)
     f = open("failed_IDs", 'a')
     f.write("\n".join(failset))
-    
-    for l in composerknownlist:
-        for i in l:
-            composerknownset.add(i)
+    f.close()
     f = open("known_composers_IDs", 'a')
     f.write("\n".join(composerknownset))
-    print(f"% failed: {100*len(faillist)/n}, % with composer known: {100*len(composerknownlist)/n}")
+    f.close()
+    print(f"% failed: {100*len(failset)/n}, % with composer known: {100*len(composerknownset)/n}")
     
         
 if __name__ == "__main__":
