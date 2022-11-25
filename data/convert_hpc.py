@@ -88,9 +88,8 @@ def main():
             failset.add(i)
         for i in composerknownlist:
             composerknownset.add(i)
-    f = open("failed_IDs", 'w')
-    f.write("\n".join(failset))
-    f.close()
+    with open("failed_IDs", 'w', encoding='utf-8') as f:
+        f.write("\n".join(failset))
     f = open("known_composers_IDs", 'w')
     f.write("\n".join(composerknownset))
     f.close()
