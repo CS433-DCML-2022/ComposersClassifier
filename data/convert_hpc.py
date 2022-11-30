@@ -1,6 +1,7 @@
 import os, shutil, subprocess
 import ms3
 import ray
+import json
 
 ### Arch-Dependant parameters to check
 
@@ -21,9 +22,10 @@ OUTPUT_PATHS = dict(
     labels = os.path.abspath('./labels'),
     metadata = os.path.abspath('./metadata'),
 )
+ERRORS_PATH = os.path.abspath('./errors')
 COMPOSERS_PATH = os.path.abspath('./composers')
 
-for dir in [CONVERSION_FOLDER,OUTPUT_PATHS['events'],OUTPUT_PATHS['notes'],OUTPUT_PATHS['measures'],OUTPUT_PATHS['labels'],OUTPUT_PATHS['metadata'],COMPOSERS_PATH]:
+for dir in [CONVERSION_FOLDER,OUTPUT_PATHS['events'],OUTPUT_PATHS['notes'],OUTPUT_PATHS['measures'],OUTPUT_PATHS['labels'],OUTPUT_PATHS['metadata'],ERRORS_PATH, COMPOSERS_PATH]:
     if not os.path.exists(dir):
         os.makedirs(dir)
 
@@ -35,17 +37,20 @@ def process_chunk(low, high):
         filename=MSCZ_FILENAMES[i]
         ID, file_extension = os.path.splitext(filename)
         converted_file_path = os.path.join(CONVERSION_FOLDER, ID + '.mscx')
-        file_path = os.path.join(DATA_FOLDER, filename)
-        print(f"Converting {file_path} to {converted_file_path}...", end=' ')
-        result = subprocess.run([MUSESCORE_CMD, "-o", converted_file_path, file_path], capture_output=False, text=True)
-        print(f"Exit code: {result.returncode}")
-        if result.returncode!=0:
-            fails.append(ID)
-            continue
+        file_path = os.path.join(DATA_FOLDER, filename)        
         try:
+            print(f"Converting {file_path} to {converted_file_path}...", end=' ')
+            result = subprocess.run([MUSESCORE_CMD, "-o", converted_file_path, file_path], capture_output=True, text=True)
+            assert result.returncode==0
             parsed = ms3.Score(converted_file_path, read_only=True)
+            result = subprocess.run([MUSESCORE_CMD, "--score-meta", converted_file_path, file_path], capture_output=True, text=True)
+            assert result.returncode==0
         except:
             fails.append(ID)
+            error_file=os.path.join(ERRORS_PATH, ID)
+            f=open(error_file,'w')
+            f.write(result.stderr)
+            f.close()
             continue
         tsv_name = f"{ID}.tsv"
         dataframes = dict(
@@ -59,17 +64,21 @@ def process_chunk(low, high):
                 continue
             tsv_path = os.path.join(OUTPUT_PATHS[facet], tsv_name)
             df.to_csv(tsv_path, sep='\t', index=False)
-        metadata = parsed.mscx.metadata
-        metadata['id'] = ID
-        if metadata['composer'] != '':
+        metadict = {k: str(v) for k, v in parsed.mscx.metadata.items() if str(v)!=''} # str cast to handle natypes ?
+        metadict['id'] = ID
+        mscore_metadict=json.loads(result.stdout)
+        for k,v in mscore_metadict.items():
+            if str(v)!='':
+                metadict['musescore_data_'+str(k)]=str(v)
+        if 'composer' in metadict and metadict['composer'] != '':
             compo_file=os.path.join(COMPOSERS_PATH, ID)
             f=open(compo_file,'w')
-            f.write(metadata['composer'])
+            f.write(metadict['composer'])
             f.close()
             composer_known.append(ID)
-        metafile_path = os.path.join(OUTPUT_PATHS['metadata'], ID+'.txt')
+        metafile_path = os.path.join(OUTPUT_PATHS['metadata'], ID+'.json')
         f=open(metafile_path, 'w')
-        f.write(str(metadata)) # Could be cleaner
+        f.write(json.dumps(metadict, indent=2, skipkeys=True))
         f.close()
     return fails, composer_known
 
