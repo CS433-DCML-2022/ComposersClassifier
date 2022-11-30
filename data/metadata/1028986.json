@@ -1,1 +1,22 @@
-{"authorUserId": "1233041", "description": "See You Again - Easy Piano \nArranged by Amy Lucas", "instrumentsNames": ["Piano"], "title": "See You Again", "url": "/user/1233041/scores/1028986", "partsCount": "1", "revisionId": "1423096", "pagesCount": "1", "partsNames": [], "timeUpdated": "2015-09-21 15:13:39 UTC", "instrumentsCount": "1", "duration": "76", "timeCreated": "2015-07-05 23:12:07 UTC", "id": "1028986", "__key__": {"namespace": "", "app": "s~xmader", "path": "\"musescore-scoreinfo\", \"1028986\"", "kind": "musescore-scoreinfo", "name": "1028986"}, "__error__": [], "__has_error__": false, "musicxmlInstruments": []}
+{
+  "creationDate": "2022-12-01",
+  "mscVersion": "3.02",
+  "platform": "Linux",
+  "title_text": "See You Again",
+  "composer_text": "Andrew Cedar, Justin Franks, Charlie Puth, Cameron Thomaz",
+  "musescore": "3.6.2",
+  "last_mc": "38",
+  "last_mn": "38",
+  "length_qb": "152.0",
+  "length_qb_unfolded": "<NA>",
+  "label_count": "0",
+  "TimeSig": "{1: '4/4'}",
+  "KeySig": "{1: -2}",
+  "all_notes_qb": "302.0",
+  "n_onsets": "162",
+  "n_onset_positions": "125",
+  "parts": "{'part_1': {'staves': [1, 2], 'trackName': 'Piano', 'instrument': 'Piano', 'staff_1_ambitus': {'min_midi': 62, 'min_name': 'D4', 'max_midi': 86, 'max_name': 'D6'}, 'staff_2_ambitus': {'min_midi': 51, 'min_name': 'Eb3', 'max_midi': 58, 'max_name': 'Bb3'}}}",
+  "ambitus": "{'min_midi': 51, 'min_name': 'Eb3', 'max_midi': 86, 'max_name': 'D6'}",
+  "id": "1028986",
+  "musescore_data_metadata": "{'composer': 'Andrew Cedar, Justin Franks, Charlie Puth, Cameron Thomaz', 'duration': 76, 'fileVersion': 302, 'hasHarmonies': 'false', 'hasLyrics': 'false', 'keysig': -2, 'lyrics': '', 'measures': 38, 'mscoreVersion': '3.6.2', 'pageFormat': {'height': 297, 'twosided': 'true', 'width': 210}, 'pages': 1, 'parts': [{'harmonyCount': 0, 'hasDrumStaff': 'false', 'hasPitchedStaff': 'true', 'hasTabStaff': 'false', 'instrumentId': 'keyboard.piano', 'isVisible': 'true', 'lyricCount': 0, 'name': '<font face=\"Times New Roman\"></font>Piano', 'program': 0}], 'poet': '', 'previousSource': '', 'subtitle': '', 'tempo': 0, 'tempoText': '', 'textFramesData': {'composers': ['Andrew Cedar, Justin Franks, Charlie Puth, Cameron Thomaz'], 'poets': [], 'subtitles': [], 'titles': ['See You Again']}, 'timesig': '4/4', 'title': 'See You Again'}"
+}

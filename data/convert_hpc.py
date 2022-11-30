@@ -2,6 +2,7 @@ import os, shutil, subprocess
 import ms3
 import ray
 import json
+from ray.exceptions import TaskCancelledError
 
 ### Arch-Dependant parameters to check
 
@@ -11,7 +12,6 @@ MUSESCORE_CMD = ms3.get_musescore('auto')
 # MUSESCORE_CMD = "/usr/local/bin/AppImg???"
 # MUSESCORE_CMD = "/home/erwan/.local/bin/MuseScore-3.6.2.548021370-x86_64.AppImage"
 
-NB_THREADS=2
 MSCZ_FILENAMES=os.listdir(DATA_FOLDER)
 MSCZ_FILENAMES_LEFT=[]
 
@@ -54,9 +54,9 @@ def process_chunk(low, high):
                 print(f"Converting {file_path} to {converted_file_path}...", end=' ')
                 result = subprocess.run([MUSESCORE_CMD, "-o", converted_file_path, file_path], capture_output=True, text=True)
                 assert result.returncode==0
-                parsed = ms3.Score(converted_file_path, read_only=True)
                 result = subprocess.run([MUSESCORE_CMD, "--score-meta", converted_file_path, file_path], capture_output=True, text=True)
                 assert result.returncode==0
+                parsed = ms3.Score(converted_file_path, read_only=True)
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
@@ -101,7 +101,11 @@ def process_chunk(low, high):
                 f.write(json.dumps(metadict, indent=2, skipkeys=True))
             
             successes.append(ID)
+    except KeyboardInterrupt:
+        print("Keyboard interrupt was detected!")
+        pass
     except Exception as e:
+        print("Something happened: ", str(e))
         pass
     return fails, successes #,composer_known
     
@@ -109,7 +113,7 @@ def process_chunk(low, high):
 
 def main():
     ray.init(ignore_reinit_error=True)
-    files = set(MSCZ_FILENAMES[:25])
+    files = set(MSCZ_FILENAMES)
     failfile = open(FAILED_IDS, 'r')
     successfile = open(SUCCESS_IDS, 'r')
     fails = set(failfile.read().splitlines())
@@ -125,12 +129,17 @@ def main():
     global MSCZ_FILENAMES_LEFT
     MSCZ_FILENAMES_LEFT=list((files.difference(fails)).difference(successes))
     n_files=len(MSCZ_FILENAMES_LEFT)
-    chunk_size = (n_files//NB_THREADS)+1
+    chunk_size = 10
+    NB_THREADS = n_files//chunk_size +1
     futures = [process_chunk.remote(i*chunk_size,min((i+1)*chunk_size,n_files)) for i in range (NB_THREADS)]
     returns = []
     try:
         returns = ray.get(futures)
     except KeyboardInterrupt:
+        # for x in futures:
+        #     ray.cancel(x) # Sends KeyboardInterrupt to function
+        ready,_ = ray.wait(futures)
+        returns = ray.get(returns)
         pass
     for item in returns:
         faillist, successlist = item

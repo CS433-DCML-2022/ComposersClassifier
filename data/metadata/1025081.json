@@ -1,1 +1,20 @@
-{"authorUserId": "3593951", "description": "I do not own this piece. All of it is written by Stan Phillip and Luke Alysworth.", "instrumentsNames": ["Clarinet"], "title": "Apollo 13 Practice Part", "url": "/user/3593951/scores/1025081", "partsCount": "1", "revisionId": "1416406", "pagesCount": "1", "partsNames": ["B? Clarinet"], "timeUpdated": "2018-07-16 08:59:45 UTC", "instrumentsCount": "1", "duration": "78", "timeCreated": "2015-07-04 03:46:38 UTC", "id": "1025081", "__key__": {"namespace": "", "app": "s~xmader", "path": "\"musescore-scoreinfo\", \"1025081\"", "kind": "musescore-scoreinfo", "name": "1025081"}, "__error__": [], "__has_error__": false, "musicxmlInstruments": []}
+{
+  "creationDate": "2015-07-03",
+  "mscVersion": "3.02",
+  "platform": "Microsoft Windows",
+  "musescore": "3.6.2",
+  "last_mc": "39",
+  "last_mn": "39",
+  "length_qb": "156.0",
+  "length_qb_unfolded": "<NA>",
+  "label_count": "0",
+  "TimeSig": "{1: '4/4'}",
+  "KeySig": "{1: 0}",
+  "all_notes_qb": "123.0",
+  "n_onsets": "174",
+  "n_onset_positions": "174",
+  "parts": "{'part_1': {'staves': [1], 'trackName': 'B\u266d Clarinet', 'longName': 'B\u266d Clarinet', 'shortName': 'B\u266d Cl.', 'instrument': 'B\u266d Clarinet', 'staff_1_ambitus': {'min_midi': 62, 'min_name': 'D4', 'max_midi': 83, 'max_name': 'B5'}}}",
+  "ambitus": "{'min_midi': 62, 'min_name': 'D4', 'max_midi': 83, 'max_name': 'B5'}",
+  "id": "1025081",
+  "musescore_data_metadata": "{'composer': '', 'duration': 78, 'fileVersion': 302, 'hasHarmonies': 'false', 'hasLyrics': 'false', 'keysig': -2, 'lyrics': '', 'measures': 39, 'mscoreVersion': '3.6.2', 'pageFormat': {'height': 279, 'twosided': 'true', 'width': 216}, 'pages': 1, 'parts': [{'harmonyCount': 0, 'hasDrumStaff': 'false', 'hasPitchedStaff': 'true', 'hasTabStaff': 'false', 'instrumentId': 'wind.reed.clarinet.bflat', 'isVisible': 'true', 'lyricCount': 0, 'name': 'B\u266d Clarinet', 'program': 71}], 'poet': '', 'previousSource': '', 'subtitle': '', 'tempo': 0, 'tempoText': '', 'textFramesData': {'composers': [], 'poets': [], 'subtitles': [], 'titles': []}, 'timesig': '4/4', 'title': '1025081'}"
+}

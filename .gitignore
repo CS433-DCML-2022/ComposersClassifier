@@ -140,3 +140,5 @@ data/failed_IDs
 data/log.txt
 data/known_composers_IDs
 data/errors
+data/metadata
+data/logs
