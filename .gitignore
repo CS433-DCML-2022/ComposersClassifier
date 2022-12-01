@@ -142,3 +142,5 @@ data/known_composers_IDs
 data/errors
 data/metadata
 data/logs
+data/converted_mscz
+data/features
