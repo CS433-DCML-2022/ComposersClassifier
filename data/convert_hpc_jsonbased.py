@@ -67,9 +67,9 @@ def process_chunk(low, high):
                 if score_meta.returncode != 0:
                     raise Exception(score_meta.stderr)
             parsed = ms3.Score()
-            with ms3.capture_parse_logs(parsed.logger) as all_warnings:
+            with ms3.capture_parse_logs(parsed.logger, level='i') as capturer:
                 parsed.parse_mscx(converted_mscz_file, read_only=True)
-                captured_warnings = all_warnings.content_list
+                log_messages = capturer.content_list
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except Exception as e:
@@ -85,19 +85,21 @@ def process_chunk(low, high):
             continue
 
         zip_features_file = os.path.join(OUTPUT_PATHS["features"], f"{ID}.zip")
-        features_dict=dict(
-        events=parsed.mscx.events(),
-        notes=parsed.mscx.notes(),
-        measures=parsed.mscx.measures(),
-        labels=parsed.mscx.labels(),
-        )
-        
-        with ZipFile(zip_features_file, 'w') as myzip:
-            for name,feature in features_dict.items():
-                if feature is not None:
-                    feature.to_csv(f"{name}.tsv", sep="\t", index=False)
-                    myzip.write(f"{name}.tsv")
-                    os.remove(f"{name}.tsv")
+        if os.path.isfile(zip_features_file):
+            os.remove(zip_features_file)
+        for facet, dataframe in (('events', parsed.mscx.events()),
+                                 ('notes', parsed.mscx.notes()),
+                                 ('measures', parsed.mscx.measures()),
+                                 ('labels', parsed.mscx.labels()),
+                                 ):
+            if dataframe is not None:
+                dataframe.to_csv(zip_features_file,
+                                 sep='\t',
+                                 mode='a',
+                                 compression=dict(method='zip',
+                                                  archive_name=facet + '.tsv'))
+        with ZipFile(zip_features_file, 'a') as myzip:
+            myzip.writestr('log.txt', '\n'.join(log_messages))
 
         if FULL_METADATA:
             mscore_metadict = json.loads(score_meta.stdout)
