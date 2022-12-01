@@ -66,15 +66,10 @@ def process_chunk(low, high):
                 )
                 if score_meta.returncode != 0:
                     raise Exception(score_meta.stderr)
-            convert = subprocess.run(
-                [MUSESCORE_CMD, "-o", converted_mscz_file, mscz_file],
-                capture_output=True,
-                text=True,
-            )
-            if convert.returncode != 0:
-                raise Exception(convert.stderr)
-            
-            parsed = ms3.Score(mscz_file, read_only=True, ms=MUSESCORE_CMD)
+            parsed = ms3.Score()
+            with ms3.capture_parse_logs(parsed.logger) as all_warnings:
+                parsed.parse_mscx(converted_mscz_file, read_only=True)
+                captured_warnings = all_warnings.content_list
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except Exception as e:
