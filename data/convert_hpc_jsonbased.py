@@ -15,12 +15,14 @@ MUSESCORE_CMD = ms3.get_musescore("auto")
 # MUSESCORE_CMD = "/usr/local/bin/AppImg???"
 # MUSESCORE_CMD = "/home/erwan/.local/bin/MuseScore-3.6.2.548021370-x86_64.AppImage"
 
+def make_id2path_dict(path):
+    return {os.path.splitext(entry.name)[0]: entry.path for entry in os.scandir(path) if entry.is_file()}
+
 NB_THREADS = 2
 FULL_METADATA = True
-JSON_IDS = set([os.path.splitext(v.name)[0] for v in os.scandir(JSON_FOLDER)]) 
-MSCZ_IDS = set([os.path.splitext(v.name)[0] for v in os.scandir(MSCZ_FOLDER)])
-JSON_IDS=JSON_IDS.intersection(MSCZ_IDS)
-JSON_FILENAMES=[v+".json" for v in JSON_IDS]
+JSON_FILES = make_id2path_dict(JSON_FOLDER)
+MSCZ_FILES = make_id2path_dict(MSCZ_FOLDER)
+ALL_IDS = list(set(JSON_FILES.keys()).intersection(set(MSCZ_FILES.keys())))
 
 OUTPUT_PATHS = dict(
     conversion=os.path.abspath("./converted_mscz"),
@@ -37,12 +39,11 @@ for dir in OUTPUT_PATHS.values():
 def process_chunk(low, high):
     # print("Instance received files to work on : ", JSON_FILENAMES[low:high])
     for i in range(low, high):
-        json_filename = JSON_FILENAMES[i]
-        ID, _ = os.path.splitext(json_filename)
-        json_file = os.path.join(JSON_FOLDER, json_filename)
+        ID = ALL_IDS[i]
+        json_file = JSON_FILES[ID]
         with open(json_file, "r", encoding='utf-8') as f:
             jsondict = json.load(f)
-        mscz_file = os.path.join(MSCZ_FOLDER, ID + ".mscz")
+        mscz_file = MSCZ_FILES[ID]
         converted_mscz_file = os.path.join(OUTPUT_PATHS["conversion"], ID + ".mscz")
         json_outfile = os.path.join(OUTPUT_PATHS['metadata'], ID + ".json")
 
@@ -117,7 +118,7 @@ def process_chunk(low, high):
 def main():
     ray.init(ignore_reinit_error=True)
 
-    n_files = len(JSON_FILENAMES[:20])
+    n_files = len(ALL_IDS)
     chunk_size = (n_files // NB_THREADS) + 1
     futures = [
         process_chunk.remote(i * chunk_size, min((i + 1) * chunk_size, n_files))
