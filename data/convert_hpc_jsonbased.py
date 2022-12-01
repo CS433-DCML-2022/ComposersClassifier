@@ -1,26 +1,32 @@
+import gc
 import os, subprocess
+from datetime import datetime
 from typing import Optional
 
 import ms3
+import numpy as np
 import ray
 import json
 from zipfile import ZipFile
+
+from tqdm import tqdm
 
 ### Arch-Dependant parameters to check
 
 MSCZ_FOLDER = os.path.abspath("./mscz")
 # MSCZ_FOLDER = os.path.abspath('/scratch/data/musescore.com/') # on the HPC: /scratch/data/musescore.com/
 
-JSON_FOLDER = os.path.abspath("./other_sources/metadata") # change to same as OUTPUT_PATHS['metadata'] to rewrite (and proper handling of stop/restart)
+JSON_FOLDER = os.path.abspath("./metadata") # change to same as OUTPUT_PATHS['metadata'] to rewrite (and proper handling of stop/restart)
 
-MUSESCORE_CMD = ms3.get_musescore("auto")
+#MUSESCORE_CMD = ms3.get_musescore("auto")
 # MUSESCORE_CMD = "/usr/local/bin/AppImg???"
-# MUSESCORE_CMD = "/home/erwan/.local/bin/MuseScore-3.6.2.548021370-x86_64.AppImage"
+MUSESCORE_CMD = "./MuseScore-3.6.2.548021370-x86_64.AppImage"
 
 def make_id2path_dict(path):
+    print("Gathering files from" + path)
     return {os.path.splitext(entry.name)[0]: entry.path for entry in os.scandir(path) if entry.is_file()}
 
-NB_THREADS = 12
+NB_THREADS = 32
 FULL_METADATA = True
 JSON_FILES = make_id2path_dict(JSON_FOLDER)
 MSCZ_FILES = make_id2path_dict(MSCZ_FOLDER)
@@ -31,6 +37,7 @@ OUTPUT_PATHS = dict(
     features=os.path.abspath("./features"),
     metadata=os.path.abspath("./metadata"),
 )
+print(OUTPUT_PATHS)
 
 for dir in OUTPUT_PATHS.values():
     if not os.path.exists(dir):
@@ -62,7 +69,6 @@ def process_chunk(low: int, high: int) -> None:
             with open(json_outfile, "w", encoding='utf-8') as f:
                 json.dump(jsondict, f)
 
-        score_meta=[]
         try:
             convert = subprocess.run(
                 [MUSESCORE_CMD, "-o", converted_mscz_file, mscz_file],
@@ -92,6 +98,7 @@ def process_chunk(low: int, high: int) -> None:
             if dataframe is not None:
                 dataframe.to_csv(zip_features_file,
                                  sep='\t',
+                                 index=False,
                                  mode='a',
                                  compression=dict(method='zip',
                                                   archive_name=facet + '.tsv'))
@@ -111,18 +118,32 @@ def process_chunk(low: int, high: int) -> None:
                 error = score_meta.stderr
 
         write_json(jsondict, error)
+    return
 
 
 def main():
     ray.init(ignore_reinit_error=True)
 
     n_files = len(ALL_IDS)
-    chunk_size = (n_files // NB_THREADS) + 1
-    futures = [
-        process_chunk.remote(i * chunk_size, min((i + 1) * chunk_size, n_files))
-        for i in range(NB_THREADS)
-    ]
-    ray.get(futures)
+    print(f"Overlap between JSON and MSCZ files: {n_files}")
+    batch_size = NB_THREADS * NB_THREADS
+    n_runs = n_files // batch_size + 1
+    # n_files_per_thread = (n_files // NB_THREADS) + 1
+    # n_runs = n_files_per_thread // NB_THREADS + 1
+    relative_start_indices = np.arange(NB_THREADS)[..., np.newaxis] * NB_THREADS
+    relative_indices = np.hstack([relative_start_indices,
+                                  relative_start_indices + NB_THREADS - 1])
+    for run in tqdm(range(n_runs)):
+        start_index = run * batch_size
+        indices = start_index + relative_indices
+        if run + 1 == n_runs:
+            # last run
+            futures = [process_chunk.remote(low, min(high, n_files)) for low, high in indices]
+        else:
+            futures = [process_chunk.remote(low, high) for low, high in indices]
+        print(f"{datetime.now()} Starting run {run+1}/{n_runs} @ index {start_index}")
+        _ = ray.get(futures)
+        gc.collect()
 
 
 if __name__ == "__main__":
