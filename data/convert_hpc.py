@@ -1,4 +1,4 @@
-import os, shutil, subprocess
+import os, time, subprocess
 import ms3
 import ray
 import json
@@ -12,6 +12,7 @@ MUSESCORE_CMD = ms3.get_musescore('auto')
 # MUSESCORE_CMD = "/usr/local/bin/AppImg???"
 # MUSESCORE_CMD = "/home/erwan/.local/bin/MuseScore-3.6.2.548021370-x86_64.AppImage"
 
+NB_THREADS=2
 MSCZ_FILENAMES=os.listdir(DATA_FOLDER)
 MSCZ_FILENAMES_LEFT=[]
 
@@ -24,6 +25,7 @@ OUTPUT_PATHS = dict(
     metadata = os.path.abspath('./metadata'),
     logs = os.path.abspath('./logs'),
     errors = os.path.abspath('./logs/errors'),
+    temp = os.path.abspath('./logs/temp'),
     #composers = os.path.abspath('./composers')
 )
 
@@ -39,7 +41,7 @@ for f in [FAILED_IDS, SUCCESS_IDS]:
         open(f,"w").close()
 
 @ray.remote
-def process_chunk(low, high):
+def process_chunk(low, high, worker_id):
     # print("Instance received files to work on : ", MSCZ_FILENAMES_LEFT[low:high])
     fails=[]
     successes=[]
@@ -103,6 +105,11 @@ def process_chunk(low, high):
             successes.append(ID)
     except KeyboardInterrupt:
         print("Keyboard interrupt was detected!")
+        with open(os.path.join(OUTPUT_PATHS["temp"],f"successes_{worker_id}.txt"), 'a') as s:
+            s.write("\n".join(successes))
+        with open(os.path.join(OUTPUT_PATHS["temp"],f"fails_{worker_id}.txt"), 'a') as f:
+            f.write("\n".join(fails))
+        print("Wrote fails to : ", os.path.join(OUTPUT_PATHS["logs"],f"fails_{worker_id}.txt"), " and successes to: ", os.path.join(OUTPUT_PATHS["logs"],f"successes_{worker_id}.txt"))
         pass
     except Exception as e:
         print("Something happened: ", str(e))
@@ -129,17 +136,28 @@ def main():
     global MSCZ_FILENAMES_LEFT
     MSCZ_FILENAMES_LEFT=list((files.difference(fails)).difference(successes))
     n_files=len(MSCZ_FILENAMES_LEFT)
-    chunk_size = 10
-    NB_THREADS = n_files//chunk_size +1
-    futures = [process_chunk.remote(i*chunk_size,min((i+1)*chunk_size,n_files)) for i in range (NB_THREADS)]
+    chunk_size = (n_files//NB_THREADS)+1
+    workers_ids = range(NB_THREADS)
+    futures = [process_chunk.remote(i*chunk_size,min((i+1)*chunk_size,n_files),i) for i in range (NB_THREADS)]
     returns = []
     try:
         returns = ray.get(futures)
     except KeyboardInterrupt:
-        # for x in futures:
-        #     ray.cancel(x) # Sends KeyboardInterrupt to function
-        ready,_ = ray.wait(futures)
-        returns = ray.get(returns)
+        for x in futures:
+            ray.cancel(x) # Sends KeyboardInterrupt to function
+        time.sleep(2)
+        for worker_id in workers_ids:
+            s=os.path.join(OUTPUT_PATHS["temp"],f"successes_{worker_id}.txt")
+            f=os.path.join(OUTPUT_PATHS["temp"],f"fails_{worker_id}.txt")
+            if os.path.exists(s) and os.path.exists(f):
+                print("Found temp files for aborted worker ", worker_id)
+                with open(s,"r") as fsucc:
+                    succ=fsucc.read().splitlines()
+                with open(f,"r") as ffail:
+                    fail=ffail.read().splitlines()
+                returns.append((fail,succ))
+                os.remove(s)
+                os.remove(f)
         pass
     for item in returns:
         faillist, successlist = item
