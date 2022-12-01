@@ -51,9 +51,16 @@ def process_chunk(low, high):
             continue
         score_meta=[]
         try:
+            convert = subprocess.run(
+                [MUSESCORE_CMD, "-o", converted_mscz_file, mscz_file],
+                capture_output=True,
+                text=True,
+            )
+            if convert.returncode != 0:
+                raise Exception(convert.stderr)
             if FULL_METADATA:
                 score_meta = subprocess.run(
-                    [MUSESCORE_CMD, "--score-meta", mscz_file],
+                    [MUSESCORE_CMD, "--score-meta", converted_mscz_file],
                     capture_output=True,
                     text=True,
                 )
