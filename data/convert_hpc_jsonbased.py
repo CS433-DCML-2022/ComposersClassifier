@@ -8,7 +8,7 @@ import json
 from zipfile import ZipFile
 
 
-@ray.remote()
+@ray.remote
 def process_file(ID: str,
                  json_file: str,
                  mscz_file: str,
@@ -90,7 +90,7 @@ def process_file(ID: str,
 
 
 def main(args):
-    ray.init(ignore_reinit_error=True, num_cpus=args.num_cpus)
+    ray.init(ignore_reinit_error=True, num_cpus=int(args.num_cpus))
 
     mscz_folder = os.path.abspath(args.scores_folder)
     json_folder = os.path.abspath(args.json_folder)
