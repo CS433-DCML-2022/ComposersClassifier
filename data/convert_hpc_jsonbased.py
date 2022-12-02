@@ -1,150 +1,145 @@
-import gc
+import argparse
 import os, subprocess
-from datetime import datetime
 from typing import Optional
 
 import ms3
-import numpy as np
 import ray
 import json
 from zipfile import ZipFile
 
-from tqdm import tqdm
 
-### Arch-Dependant parameters to check
+@ray.remote()
+def process_file(ID: str,
+                 json_file: str,
+                 mscz_file: str,
+                 conversion_folder: str,
+                 features_folder: str,
+                 musescore: str,
+                 skip: bool = True,
+                 more: bool = True
+                 ) -> None:
+    print(f"Parsing ID {ID}")
+    with open(json_file, "r", encoding='utf-8') as f:
+        jsondict = json.load(f)
+    if skip and "__terminated__" in jsondict:
+        print(f"Skipped ID {ID}")
+        return
 
-MSCZ_FOLDER = os.path.abspath("./mscz")
-# MSCZ_FOLDER = os.path.abspath('/scratch/data/musescore.com/') # on the HPC: /scratch/data/musescore.com/
+    converted_mscz_file = os.path.join(conversion_folder, ID + ".mscz")
 
-JSON_FOLDER = os.path.abspath("./metadata") # change to same as OUTPUT_PATHS['metadata'] to rewrite (and proper handling of stop/restart)
+    def write_json(jsondict: dict, error: Optional[str] = None):
+        jsondict['__terminated__'] = True
+        if error is not None:
+            print(f"ID {ID} failed with\n\t{error}")
+            jsondict['last_error'] = str(error)
+        with open(json_file, "w", encoding='utf-8') as f:
+            json.dump(jsondict, f)
 
-#MUSESCORE_CMD = ms3.get_musescore("auto")
-# MUSESCORE_CMD = "/usr/local/bin/AppImg???"
-MUSESCORE_CMD = "./MuseScore-3.6.2.548021370-x86_64.AppImage"
+    try:
+        convert = subprocess.run(
+            [musescore, "-o", converted_mscz_file, mscz_file],
+            capture_output=True,
+            text=True,
+        )
+        if convert.returncode != 0:
+            raise Exception(convert.stderr)
+        parsed = ms3.Score(level='i')
+        with ms3.capture_parse_logs(parsed.logger, level='i') as capturer:
+            parsed.parse_mscx(converted_mscz_file, read_only=True)
+            log_messages = capturer.content_list
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        write_json(jsondict, error=str(e))
+        return
+    jsondict['ms3_metadata'] = parsed.mscx.metadata
+    zip_features_file = os.path.join(features_folder, ID + ".zip")
+    if os.path.isfile(zip_features_file):
+        os.remove(zip_features_file)
+    for facet, dataframe in (('events', parsed.mscx.events()),
+                             ('notes', parsed.mscx.notes()),
+                             ('measures', parsed.mscx.measures()),
+                             ('labels', parsed.mscx.labels()),
+                             ):
+        if dataframe is not None:
+            dataframe.to_csv(zip_features_file,
+                             sep='\t',
+                             index=False,
+                             mode='a',
+                             compression=dict(method='zip',
+                                              archive_name=facet + '.tsv'))
+    with ZipFile(zip_features_file, 'a') as myzip:
+        myzip.writestr('log.txt', '\n'.join(log_messages))
+    print(zip_features_file + ' written.')
 
-def make_id2path_dict(path):
-    print("Gathering files from" + path)
-    return {os.path.splitext(entry.name)[0]: entry.path for entry in os.scandir(path) if entry.is_file()}
+    error = None
+    if more:
+        score_meta = subprocess.run(
+            [musescore, "--score-meta", converted_mscz_file],
+            capture_output=True,
+            text=True,
+        )
+        if score_meta.returncode == 0:
+            jsondict['musescore_metadata'] = json.loads(score_meta.stdout)
+        else:
+            error = score_meta.stderr
 
-NB_THREADS = 32
-FULL_METADATA = True
-JSON_FILES = make_id2path_dict(JSON_FOLDER)
-MSCZ_FILES = make_id2path_dict(MSCZ_FOLDER)
-ALL_IDS = list(set(JSON_FILES.keys()).intersection(set(MSCZ_FILES.keys())))
-
-OUTPUT_PATHS = dict(
-    conversion=os.path.abspath("./converted_mscz"),
-    features=os.path.abspath("./features"),
-    metadata=os.path.abspath("./metadata"),
-)
-print(OUTPUT_PATHS)
-
-for dir in OUTPUT_PATHS.values():
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
-
-@ray.remote
-def process_chunk(low: int, high: int) -> None:
-    # print("Instance received files to work on : ", JSON_FILENAMES[low:high])
-    for i in range(low, high):
-        ID = ALL_IDS[i]
-        json_file = JSON_FILES[ID]
-        with open(json_file, "r", encoding='utf-8') as f:
-            jsondict = json.load(f)
-        if "__terminated__" in jsondict :
-            continue
-        mscz_file = MSCZ_FILES[ID]
-        converted_mscz_file = os.path.join(OUTPUT_PATHS["conversion"], ID + ".mscz")
-        json_outfile = os.path.join(OUTPUT_PATHS['metadata'], ID + ".json")
-
-        def write_json(jsondict: dict, error: Optional[str] = None):
-            nonlocal json_outfile
-            jsondict['__terminated__'] = True
-            if '__error__' not in jsondict:
-                jsondict['__error__'] = []
-            if error is not None:
-                jsondict['__error__'].append(str(error))
-                jsondict['__has_error__'] = True
-            with open(json_outfile, "w", encoding='utf-8') as f:
-                json.dump(jsondict, f)
-
-        try:
-            convert = subprocess.run(
-                [MUSESCORE_CMD, "-o", converted_mscz_file, mscz_file],
-                capture_output=True,
-                text=True,
-            )
-            if convert.returncode != 0:
-                raise Exception(convert.stderr)
-            parsed = ms3.Score()
-            with ms3.capture_parse_logs(parsed.logger, level='i') as capturer:
-                parsed.parse_mscx(converted_mscz_file, read_only=True)
-                log_messages = capturer.content_list
-        except KeyboardInterrupt:
-            raise
-        except Exception as e:
-            write_json(jsondict, error=e)
-            continue
-        jsondict['ms3_metadata'] = parsed.mscx.metadata
-        zip_features_file = os.path.join(OUTPUT_PATHS["features"], f"{ID}.zip")
-        if os.path.isfile(zip_features_file):
-            os.remove(zip_features_file)
-        for facet, dataframe in (('events', parsed.mscx.events()),
-                                 ('notes', parsed.mscx.notes()),
-                                 ('measures', parsed.mscx.measures()),
-                                 ('labels', parsed.mscx.labels()),
-                                 ):
-            if dataframe is not None:
-                dataframe.to_csv(zip_features_file,
-                                 sep='\t',
-                                 index=False,
-                                 mode='a',
-                                 compression=dict(method='zip',
-                                                  archive_name=facet + '.tsv'))
-        with ZipFile(zip_features_file, 'a') as myzip:
-            myzip.writestr('log.txt', '\n'.join(log_messages))
-
-        error = None
-        if FULL_METADATA:
-            score_meta = subprocess.run(
-                [MUSESCORE_CMD, "--score-meta", converted_mscz_file],
-                capture_output=True,
-                text=True,
-            )
-            if score_meta.returncode == 0:
-                jsondict['musescore_metadata'] = json.loads(score_meta.stdout)
-            else:
-                error = score_meta.stderr
-
-        write_json(jsondict, error)
+    write_json(jsondict, error)
+    print(json_file + ' overwritten.')
     return
 
 
-def main():
-    ray.init(ignore_reinit_error=True)
+def main(args):
+    ray.init(ignore_reinit_error=True, num_cpus=args.num_cpus)
+
+    mscz_folder = os.path.abspath(args.scores_folder)
+    json_folder = os.path.abspath(args.json_folder)
+    CONVERSION_FOLDER = ray.put(os.path.abspath(args.conversion_folder))
+    FEATURES_FOLDER = ray.put(os.path.abspath(args.features_folder))
+    musescore = ms3.get_musescore(args.musescore)
+    MUSESCORE = ray.put(musescore)
+    SKIP = ray.put(not args.all)
+    MORE = ray.put(not args.skip)
+
+    def make_id2path_dict(path):
+        print("Gathering files from" + path)
+        return {os.path.splitext(entry.name)[0]: entry.path for entry in os.scandir(path) if entry.is_file()}
+
+    json_files = make_id2path_dict(json_folder)
+    mscz_files = make_id2path_dict(mscz_folder)
+    ALL_IDS = set(json_files.keys()).intersection(set(mscz_files.keys()))
+
+
+    for dir in ray.get([CONVERSION_FOLDER, FEATURES_FOLDER]):
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
     n_files = len(ALL_IDS)
     print(f"Overlap between JSON and MSCZ files: {n_files}")
-    batch_size = NB_THREADS * NB_THREADS
-    n_runs = n_files // batch_size + 1
-    # n_files_per_thread = (n_files // NB_THREADS) + 1
-    # n_runs = n_files_per_thread // NB_THREADS + 1
-    relative_start_indices = np.arange(NB_THREADS)[..., np.newaxis] * NB_THREADS
-    relative_indices = np.hstack([relative_start_indices,
-                                  relative_start_indices + NB_THREADS - 1])
-    for run in tqdm(range(n_runs)):
-        start_index = run * batch_size
-        indices = start_index + relative_indices
-        if run + 1 == n_runs:
-            # last run
-            futures = [process_chunk.remote(low, min(high, n_files)) for low, high in indices]
-        else:
-            futures = [process_chunk.remote(low, high) for low, high in indices]
-        print(f"{datetime.now()} Starting run {run+1}/{n_runs} @ index {start_index}")
-        _ = ray.get(futures)
-        gc.collect()
-
+    futures = [
+        process_file.remote(ID=ID,
+                            json_file=json_files[ID],
+                            mscz_file=mscz_files[ID],
+                            conversion_folder=CONVERSION_FOLDER,
+                            features_folder=FEATURES_FOLDER,
+                            musescore=MUSESCORE,
+                            skip=SKIP,
+                            more=MORE)
+        for ID in ALL_IDS
+    ]
+    ray.get(futures)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="""Process JSON AND MSCZ.""")
+    parser.add_argument('-s', '--scores_folder', default='./mscz')
+    parser.add_argument('-j', '--json_folder', default='./metadata')
+    parser.add_argument('-c', '--conversion_folder', default='./converted_mscz')
+    parser.add_argument('-f', '--features_folder', default='./features')
+    parser.add_argument('-n', '--num_cpus', default=12, help='Number of CPUs to be used in parallel.')
+    parser.add_argument('-m', '--musescore', default="./MuseScore-3.6.2.548021370-x86_64.AppImage", help='MuseScore executable.')
+    parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key __terminated__')
+    parser.add_argument('--skip', action='store_true', help='Skip the second call to MuseScore that extracts more '
+                                                            'metadata from the score after the conversion.')
+
+    args = parser.parse_args()
+    main(args)
