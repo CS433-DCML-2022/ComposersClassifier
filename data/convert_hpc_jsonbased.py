@@ -14,6 +14,8 @@ def process_file(ID: str,
                  mscz_file: str,
                  conversion_folder: str,
                  features_folder: str,
+                 conversion_errors_folder: str,
+                 parsing_errors_folder: str,
                  musescore: str,
                  skip: bool = True,
                  more: bool = True
@@ -96,6 +98,8 @@ def main(args):
     json_folder = os.path.abspath(args.json_folder)
     CONVERSION_FOLDER = ray.put(os.path.abspath(args.conversion_folder))
     FEATURES_FOLDER = ray.put(os.path.abspath(args.features_folder))
+    CONVERSION_ERRORS_FOLDER = ray.put(os.path.abspath((args.unconvertible)))
+    PARSING_ERRORS_FOLDER = ray.put(os.path.abspath((args.unconvertible)))
     musescore = ms3.get_musescore(args.musescore)
     MUSESCORE = ray.put(musescore)
     SKIP = ray.put(not args.all)
@@ -122,6 +126,8 @@ def main(args):
                             mscz_file=mscz_files[ID],
                             conversion_folder=CONVERSION_FOLDER,
                             features_folder=FEATURES_FOLDER,
+                            conversion_errors_folder=CONVERSION_ERRORS_FOLDER,
+                            parsing_errors_folder=PARSING_ERRORS_FOLDER,
                             musescore=MUSESCORE,
                             skip=SKIP,
                             more=MORE)
@@ -135,6 +141,8 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--json_folder', default='./metadata')
     parser.add_argument('-c', '--conversion_folder', default='./converted_mscz')
     parser.add_argument('-f', '--features_folder', default='./features')
+    parser.add_argument('-u', '--unconvertible', default='./conversion_errors')
+    parser.add_argument('-p', '--unparseable', default='./parsing_errors')
     parser.add_argument('-n', '--num_cpus', default=12, help='Number of CPUs to be used in parallel.')
     parser.add_argument('-m', '--musescore', default="./MuseScore-3.6.2.548021370-x86_64.AppImage", help='MuseScore executable.')
     parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key __terminated__')
