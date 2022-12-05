@@ -5,6 +5,7 @@ from typing import Tuple
 import ray
 import json
 import pandas as pd
+from tqdm import tqdm
 
 
 @ray.remote
@@ -22,18 +23,18 @@ def read_json(ID: str,
     converted_mscz_file = os.path.join(conversion_folder, score_name)
     zip_features_file = os.path.join(features_folder, ID + ".zip")
 
-    result = {}
+    id_row = {}
     original = os.path.isfile(original_mscz_file)
-    result['original'] = original
+    id_row['original'] = original
     if original:
-        result['terminated'] = "__terminated__" in jsondict
+        id_row['terminated'] = "__terminated__" in jsondict
         if 'last_error' in jsondict:
-            result['last_error'] = jsondict['last_error']
+            id_row['last_error'] = jsondict['last_error']
         if os.path.isfile(converted_mscz_file):
-            result['converted'] = os.stat(converted_mscz_file).st_size
+            id_row['converted'] = os.stat(converted_mscz_file).st_size
         if os.path.isfile(zip_features_file):
-            result['features'] = os.stat(zip_features_file).st_size
-    return ID, result
+            id_row['features'] = os.stat(zip_features_file).st_size
+    return ID, id_row
 
 
 def main(args):
@@ -57,12 +58,16 @@ def main(args):
                                         conversion_folder=CONVERSION_FOLDER,
                                         features_folder=FEATURES_FOLDER,
                                         ))
-    print(f"Processing {len(futures)} JSON files on {args.num_cpus} CPUs.")
+    n_files = len(futures)
+    print(f"Processing {n_files} JSON files on {args.num_cpus} CPUs.")
     records = {}
+    progress_bar = tqdm(total=n_files)
     while len(futures):
         finished, futures = ray.wait(futures)
         for ID, row in ray.get(finished):
             records[ID] = row
+        progress_bar.update(len(finished))
+    progress_bar.close()
 
     tallied = pd.DataFrame.from_dict(records, orient='index')
     tallied.index.rename('ID', inplace=True)
