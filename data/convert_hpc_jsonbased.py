@@ -39,7 +39,9 @@ def process_file(ID: str,
 
     converted_mscz_file = os.path.join(conversion_folder, ID + ".mscz")
     conversion_error_file = os.path.join(conversion_errors_folder, ID)
-
+    if skip and os.path.isfile(conversion_error_file):
+        print(f"Skipped ID {ID} because file with conversion errors is present.")
+        return
     try:
         convert = subprocess.run(
             [musescore, "-o", converted_mscz_file, mscz_file],
