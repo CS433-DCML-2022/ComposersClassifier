@@ -19,11 +19,12 @@ def process_file(ID: str,
                  more: bool = True
                  ) -> None:
     print(f"Parsing ID {ID}")
+    zip_features_file = os.path.join(features_folder, ID + ".zip")
+    if skip and os.path.isfile(zip_features_file):
+        print(f"Skipped ID {ID} because features are already available.")
+        continue
     with open(json_file, "r", encoding='utf-8') as f:
         jsondict = json.load(f)
-    if skip and "__terminated__" in jsondict:
-        print(f"Skipped ID {ID}")
-        return
 
     converted_mscz_file = os.path.join(conversion_folder, ID + ".mscz")
 
@@ -53,7 +54,6 @@ def process_file(ID: str,
         write_json(jsondict, error=str(e))
         return
     jsondict['ms3_metadata'] = parsed.mscx.metadata
-    zip_features_file = os.path.join(features_folder, ID + ".zip")
     if os.path.isfile(zip_features_file):
         os.remove(zip_features_file)
     for facet, dataframe in (('events', parsed.mscx.events()),
