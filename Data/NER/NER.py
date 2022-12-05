@@ -158,7 +158,7 @@ if __name__ == "__main__":
                 # save new json including language and quit?
                 else: 
                     if SAVELANG: json.dump(jsonObj,jsonFile)
-                    if DEBUG: print("language model not available for query" + currQueryText + " in lang " + lang)
+                    if DEBUG: print("language model not available for query " + currQueryText + " in lang " + lang)
                     continue
             else:
                 continue
