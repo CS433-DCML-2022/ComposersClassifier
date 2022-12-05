@@ -24,19 +24,21 @@ def process_file(ID: str,
     zip_features_file = os.path.join(features_folder, ID + ".zip")
     if skip and os.path.isfile(zip_features_file):
         print(f"Skipped ID {ID} because features are already available.")
-        continue
+        return
+
     with open(json_file, "r", encoding='utf-8') as f:
         jsondict = json.load(f)
 
-    converted_mscz_file = os.path.join(conversion_folder, ID + ".mscz")
-
-    def write_json(jsondict: dict, error: Optional[str] = None):
+    def write_json(error: Optional[str] = None):
+        nonlocal jsondict
         jsondict['__terminated__'] = True
         if error is not None:
-            print(f"ID {ID} failed with\n\t{error}")
             jsondict['last_error'] = str(error)
         with open(json_file, "w", encoding='utf-8') as f:
             json.dump(jsondict, f)
+
+    converted_mscz_file = os.path.join(conversion_folder, ID + ".mscz")
+    conversion_error_file = os.path.join(conversion_errors_folder, ID)
 
     try:
         convert = subprocess.run(
@@ -46,33 +48,47 @@ def process_file(ID: str,
         )
         if convert.returncode != 0:
             raise Exception(convert.stderr)
+    except Exception as e:
+        exception = str(e)
+        with open(conversion_error_file, 'w', encoding='utf-8') as f:
+            f.write(exception)
+        write_json(exception)
+        print(f"ID {ID} could not be converted. Stored errors as {conversion_error_file}:\n{exception}")
+        return
+
+    parsing_errors_file = os.path.join(parsing_errors_folder, ID)
+
+    try:
         parsed = ms3.Score(level='i')
         with ms3.capture_parse_logs(parsed.logger, level='i') as capturer:
             parsed.parse_mscx(converted_mscz_file, read_only=True)
             log_messages = capturer.content_list
-    except KeyboardInterrupt:
-        raise
+        if os.path.isfile(zip_features_file):
+            os.remove(zip_features_file)
+        for facet, dataframe in (('events', parsed.mscx.events()),
+                                 ('notes', parsed.mscx.notes()),
+                                 ('measures', parsed.mscx.measures()),
+                                 ('labels', parsed.mscx.labels()),
+                                 ):
+            if dataframe is not None:
+                dataframe.to_csv(zip_features_file,
+                                 sep='\t',
+                                 index=False,
+                                 mode='a',
+                                 compression=dict(method='zip',
+                                                  archive_name=facet + '.tsv'))
+        with ZipFile(zip_features_file, 'a') as myzip:
+            myzip.writestr('log.txt', '\n'.join(log_messages))
+        print(zip_features_file + ' written.')
     except Exception as e:
-        write_json(jsondict, error=str(e))
+        exception = str(e)
+        with open(parsing_errors_file, 'w', encoding='utf-8') as f:
+            f.write(exception)
+        write_json(exception)
+        print(f"ID {ID} could not be parsed. Stored errors as {conversion_error_file}:\n{exception}")
         return
+
     jsondict['ms3_metadata'] = parsed.mscx.metadata
-    if os.path.isfile(zip_features_file):
-        os.remove(zip_features_file)
-    for facet, dataframe in (('events', parsed.mscx.events()),
-                             ('notes', parsed.mscx.notes()),
-                             ('measures', parsed.mscx.measures()),
-                             ('labels', parsed.mscx.labels()),
-                             ):
-        if dataframe is not None:
-            dataframe.to_csv(zip_features_file,
-                             sep='\t',
-                             index=False,
-                             mode='a',
-                             compression=dict(method='zip',
-                                              archive_name=facet + '.tsv'))
-    with ZipFile(zip_features_file, 'a') as myzip:
-        myzip.writestr('log.txt', '\n'.join(log_messages))
-    print(zip_features_file + ' written.')
 
     error = None
     if more:
@@ -86,7 +102,7 @@ def process_file(ID: str,
         else:
             error = score_meta.stderr
 
-    write_json(jsondict, error)
+    write_json(error)
     print(json_file + ' overwritten.')
     return
 
@@ -114,7 +130,7 @@ def main(args):
     ALL_IDS = set(json_files.keys()).intersection(set(mscz_files.keys()))
 
 
-    for dir in ray.get([CONVERSION_FOLDER, FEATURES_FOLDER]):
+    for dir in ray.get([CONVERSION_FOLDER, FEATURES_FOLDER, CONVERSION_ERRORS_FOLDER, PARSING_ERRORS_FOLDER]):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
