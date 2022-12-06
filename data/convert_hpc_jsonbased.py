@@ -2,7 +2,7 @@ import argparse
 import os, subprocess
 from typing import Optional
 
-import ms3
+import ms3 # pip install git+https://github.com/johentsch/ms3@corpus_structure
 import ray
 import json
 from zipfile import ZipFile
