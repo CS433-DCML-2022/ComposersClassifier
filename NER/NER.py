@@ -126,36 +126,81 @@ def normalizeName(name):
         l,f = name.split(',')
         return f+l
 
-#check if composer name is of correct format, if so assume correct unless knowncomposersonly=True
-#  write to csv and json
-def checkName(composer,ID,jsonObj,f,csv_file_dir='composer_id.csv'):
-    #strip any newlines or spaces
-    composer = composer.strip("\n").strip(" ")
-    #see if we can get a clean split into two
-    #alternatively if we get 3 substrings maybe we can handle this somehow (with proper noun parse to remove extra terms?)
-    if len(composer.split(" "))==2 or len(composer.split(","))==2:
-        composer = normalizeName(composer)
-        # check for stem version of composer if exists? 
-        # if KNOWNCOMPOSERSONLY:
-        with open (f, 'w', newline='') as jsonFile:
-            jsonObj["parsed_composer"] = composer
-            json.dump(jsonObj,jsonFile)
-        # with open(csv_file_dir,'a') as csvFile:
-        #     writer = csv.writer(csvFile)
-        #     writer.writerow(str(ID) + "," + composer)
-        return True
-    else: return False
+# #check if composer name is of correct format, if so assume correct unless knowncomposersonly=True
+# #  write to csv and json
+# def checkName(composer,ID,jsonObj,f,csv_file_dir='composer_id.csv'):
+#     #strip any newlines or spaces
+#     composer = composer.strip("\n").strip(" ")
+#     #see if we can get a clean split into two
+#     #alternatively if we get 3 substrings maybe we can handle this somehow (with proper noun parse to remove extra terms?)
+#     if len(composer.split(" "))==2 or len(composer.split(","))==2:
+#         composer = normalizeName(composer)
+#         # check for stem version of composer if exists? 
+#         # if KNOWNCOMPOSERSONLY:
+#         with open (f, 'w', newline='') as jsonFile:
+#             jsonObj["parsed_composer"] = composer
+#             json.dump(jsonObj,jsonFile)
+#         # with open(csv_file_dir,'a') as csvFile:
+#         #     writer = csv.writer(csvFile)
+#         #     writer.writerow(str(ID) + "," + composer)
+#         return True
+#     else: return False
+
+#determine if composer is actually arranger
+def disqualifyingWords(wordList):
+    for index,word in enumerate(wordList):
+        word=str.lower(word)
+        word = ''.join(e for e in word if e.isalnum()) 
+        
+        if 'arr' in word and index == 0: return True
+        if 'transcription' in word and index == 0: return True
+
+    return False
+
+#if any bad words then remove them
+def badWord(word):
+    #normalize
+    if word.isnumeric(): return True
+    word=str.lower(word)
+    word = ''.join(e for e in word if e.isalnum())
+    #remove numbers
+    if word.isnumeric(): return True
+    #remove any common words
+    bad_words = ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "arr." "arranger", "arranged", "arrangement", "ar", "transcription", "transc", "Choral", "wrote", "version", "in"]
+    if word in bad_words: return True
+
+    return False
+
 
 def basicClean(composer):
-    composer = composer.strip(" ")
+    #normalize
+    composer = composer.strip(" ").strip("\n")
+
+    #remove multiple composers?
+    composer = composer.split("\n")[0].split(",")[0]
+
     composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//")
     composer = str.title(str.lower(composer))
+
+    #remove any entries with arranger
+    composerToList = composer.split(" ")
+    if disqualifyingWords(composerToList): return "unknown"
+
+    #remove known bad words
+    composerStringList = filter(lambda x: not badWord(x),composerToList)
+    composer = " ".join(composerStringList)
+
+    #length check
+    if len(composer) > 45 or len(composer) < 4 :return "unknown"
+    # print(composer)
     return composer
 
 def writeFirstComposer(composer,jsonObj,f, csv_file_dir,ID):
     #very basic cleaning of name
-    if DEBUG: print(composer)
-    jsonObj['first_composer'] = basicClean(composer)
+    # if DEBUG: print(composer)
+    composer = basicClean(composer)
+    jsonObj['first_composer'] = composer
+
     with open (f, 'w', newline='') as jsonFile:
         json.dump(jsonObj,jsonFile)
     with open(csv_file_dir,'a') as csvFile:
@@ -172,17 +217,17 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
     if ms3Dict:
         composerField1 = ms3Dict.get("composer")
         if composerField1: 
-            if NORMALIZE_NAMES:
-                if checkName(composerField1,ID,jsonObj,f): return True
-            else:
+            # if NORMALIZE_NAMES:
+            #     if checkName(composerField1,ID,jsonObj,f): return True
+            # else:
                 writeFirstComposer(composerField1,jsonObj,f,csv_file_dir,ID)
                 return True
                 
         composerField2 = ms3Dict.get("composer_text")
         if composerField2: 
-            if NORMALIZE_NAMES:
-                if checkName(composerField2,ID,jsonObj,f): return True
-            else:
+            # if NORMALIZE_NAMES:
+            #     if checkName(composerField2,ID,jsonObj,f): return True
+            # else:
                 writeFirstComposer(composerField2,jsonObj,f,csv_file_dir,ID)
                 return True
 
@@ -192,9 +237,9 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
         museScoreMDDict = museScoreDict.get( "metadata")
         composerField3 = museScoreMDDict.get("composer")
         if composerField3:
-            if NORMALIZE_NAMES:
-                if checkName(composerField3,ID,jsonObj,f): return True
-            else:
+            # if NORMALIZE_NAMES:
+            #     if checkName(composerField3,ID,jsonObj,f): return True
+            # else:
                 writeFirstComposer(composerField3,jsonObj,f,csv_file_dir,ID) 
                 return True
 
@@ -203,9 +248,9 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
             textDataComposerList = museScoreTextDataDict.get("composers")
             if textDataComposerList:
                 for textDataComposer in textDataComposerList:
-                    if NORMALIZE_NAMES:
-                        if checkName(textDataComposer,ID,jsonObj,f): return True
-                    else:
+                    # if NORMALIZE_NAMES:
+                    #     if checkName(textDataComposer,ID,jsonObj,f): return True
+                    # else:
                         writeFirstComposer(textDataComposer,jsonObj,f,csv_file_dir,ID)
                         return True  
 
@@ -275,7 +320,7 @@ def main(args):
 
     for jsonFileName in os.listdir(json_dir):
         ID = jsonFileName.split(".")[0]
-        if DEBUG: print(jsonFileName)
+        # if DEBUG: print(jsonFileName)
         f = os.path.join(json_dir,jsonFileName)
 
         with open(f,'r',newline='') as currJson:
@@ -310,7 +355,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="""Get composers from metadata.""")
     parser.add_argument('-j', '--json_folder', default="../data/metadata")
-    parser.add_argument('-csv', '--csv_file', default="../data/csv/labels.csv")
+    parser.add_argument('-csv', '--csv_file', default="../data/csv/labels_v2.csv")
     parser.add_argument('-c', '--composer_file', default="composer_labels.txt")
 
     args = parser.parse_args()
