@@ -18,7 +18,7 @@ SMALLMODEL = False
 CONVERT_COMPOSER_TO_STEM = False
 AGRADELABELSONLY = True
 KNOWNCOMPOSERSONLY = False
-CLEAN_NAMES = False
+NORMALIZE_NAMES = False
 FIELDS = ["description", "title"] #fix this to specify which metadata dictionary e.g. ms3 or musescore
 # SAVELANG = True
 
@@ -118,13 +118,13 @@ def namedEntityRecognition(stringToParse, composersDict,composersList, NLPmodel,
     
     return [name[0] for name in candidates]
 
-# #normalize composer name
-# def normalizeName(name):
-#     name= ''.join(e for e in name if e.isalnum() or e==" ")
-#     name = str.capitalize(str.lower(name))
-#     if ',' in name:
-#         l,f = name.split(',')
-#         return f+l
+#normalize composer name
+def normalizeName(name):
+    name= ''.join(e for e in name if e.isalnum() or e==" ")
+    name = str.capitalize(str.lower(name))
+    if ',' in name:
+        l,f = name.split(',')
+        return f+l
 
 #check if composer name is of correct format, if so assume correct unless knowncomposersonly=True
 #  write to csv and json
@@ -150,13 +150,17 @@ def basicClean(composer):
     composer = composer.strip(" ")
     composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//")
     composer = str.title(str.lower(composer))
+    return composer
 
-def writeFirstComposer(composer,jsonObj,f):
+def writeFirstComposer(composer,jsonObj,f, csv_file_dir,ID):
     #very basic cleaning of name
     if DEBUG: print(composer)
     jsonObj['first_composer'] = basicClean(composer)
     with open (f, 'w', newline='') as jsonFile:
         json.dump(jsonObj,jsonFile)
+    with open(csv_file_dir,'a') as csvFile:
+            writer = csv.writer(csvFile)
+            writer.writerow([str(ID), composer])
 
 #prioritized check of metadata composer fields
 #if cleanName, returns true if correctly formatted name is found in composer fields, optional check with wiki
@@ -168,18 +172,18 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
     if ms3Dict:
         composerField1 = ms3Dict.get("composer")
         if composerField1: 
-            if CLEAN_NAMES:
+            if NORMALIZE_NAMES:
                 if checkName(composerField1,ID,jsonObj,f): return True
             else:
-                writeFirstComposer(composerField1,jsonObj,f)
+                writeFirstComposer(composerField1,jsonObj,f,csv_file_dir,ID)
                 return True
                 
         composerField2 = ms3Dict.get("composer_text")
         if composerField2: 
-            if CLEAN_NAMES:
+            if NORMALIZE_NAMES:
                 if checkName(composerField2,ID,jsonObj,f): return True
             else:
-                writeFirstComposer(composerField2,jsonObj,f)
+                writeFirstComposer(composerField2,jsonObj,f,csv_file_dir,ID)
                 return True
 
     #then check museScoreDict
@@ -188,10 +192,10 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
         museScoreMDDict = museScoreDict.get( "metadata")
         composerField3 = museScoreMDDict.get("composer")
         if composerField3:
-            if CLEAN_NAMES:
+            if NORMALIZE_NAMES:
                 if checkName(composerField3,ID,jsonObj,f): return True
             else:
-                writeFirstComposer(composerField3,jsonObj,f) 
+                writeFirstComposer(composerField3,jsonObj,f,csv_file_dir,ID) 
                 return True
 
         museScoreTextDataDict = museScoreMDDict.get("textFramesData")
@@ -199,10 +203,10 @@ def getComposerFromMetadata(jsonObj,ID,f,csv_file_dir):
             textDataComposerList = museScoreTextDataDict.get("composers")
             if textDataComposerList:
                 for textDataComposer in textDataComposerList:
-                    if CLEAN_NAMES:
+                    if NORMALIZE_NAMES:
                         if checkName(textDataComposer,ID,jsonObj,f): return True
                     else:
-                        writeFirstComposer(textDataComposer,jsonObj,f)
+                        writeFirstComposer(textDataComposer,jsonObj,f,csv_file_dir,ID)
                         return True  
 
         return False
@@ -286,7 +290,10 @@ def main(args):
                 jsonObj["first_composer"] = "unknown"
                 with open (f, 'w', newline='') as jsonFile:
                     json.dump(jsonObj,jsonFile)
-                    continue
+                with open(csv_file_dir,'a') as csvFile:
+                        writer = csv.writer(csvFile)
+                        writer.writerow([str(ID),  "unknown"])
+                continue
                 
             #Parse other fields - to be implemented
             if BgradeParse(jsonObj, modelDict, composersList,composersDict,f,csv_file_dir): continue
@@ -297,6 +304,7 @@ def main(args):
                 with open (f, 'w', newline='') as jsonFile:
                     json.dump(jsonObj,jsonFile)
                 
+
 
 if __name__ == "__main__":
 
