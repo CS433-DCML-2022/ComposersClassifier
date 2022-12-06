@@ -42,21 +42,24 @@ def process_file(ID: str,
     if skip and os.path.isfile(conversion_error_file):
         print(f"Skipped ID {ID} because file with conversion errors is present.")
         return
-    try:
-        convert = subprocess.run(
-            [musescore, "-o", converted_mscz_file, mscz_file],
-            capture_output=True,
-            text=True,
-        )
-        if convert.returncode != 0:
-            raise Exception(convert.stderr)
-    except Exception as e:
-        exception = str(e)
-        with open(conversion_error_file, 'w', encoding='utf-8') as f:
-            f.write(exception)
-        write_json(exception)
-        print(f"ID {ID} could not be converted. Stored errors as {conversion_error_file}:\n{exception}")
-        return
+    if skip and os.path.isfile(converted_mscz_file):
+        print(f"ID {ID}: Skipped conversion because converted file is already present.")
+    else:
+        try:
+            convert = subprocess.run(
+                [musescore, "-o", converted_mscz_file, mscz_file],
+                capture_output=True,
+                text=True,
+            )
+            if convert.returncode != 0:
+                raise Exception(convert.stderr)
+        except Exception as e:
+            exception = str(e)
+            with open(conversion_error_file, 'w', encoding='utf-8') as f:
+                f.write(exception)
+            write_json(exception)
+            print(f"ID {ID} could not be converted. Stored errors as {conversion_error_file}:\n{exception}")
+            return
 
     parsing_errors_file = os.path.join(parsing_errors_folder, ID)
 
@@ -87,7 +90,7 @@ def process_file(ID: str,
         with open(parsing_errors_file, 'w', encoding='utf-8') as f:
             f.write(exception)
         write_json(exception)
-        print(f"ID {ID} could not be parsed. Stored errors as {conversion_error_file}:\n{exception}")
+        print(f"ID {ID} could not be parsed. Stored errors as {parsing_errors_file}:\n{exception}")
         return
 
     jsondict['ms3_metadata'] = parsed.mscx.metadata
@@ -117,7 +120,7 @@ def main(args):
     CONVERSION_FOLDER = ray.put(os.path.abspath(args.conversion_folder))
     FEATURES_FOLDER = ray.put(os.path.abspath(args.features_folder))
     CONVERSION_ERRORS_FOLDER = ray.put(os.path.abspath((args.unconvertible)))
-    PARSING_ERRORS_FOLDER = ray.put(os.path.abspath((args.unconvertible)))
+    PARSING_ERRORS_FOLDER = ray.put(os.path.abspath((args.unparseable)))
     musescore = ms3.get_musescore(args.musescore)
     MUSESCORE = ray.put(musescore)
     SKIP = ray.put(not args.all)
