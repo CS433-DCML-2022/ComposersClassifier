@@ -163,10 +163,14 @@ def badWord(word):
     if word.isnumeric(): return True
     word=str.lower(word)
     word = ''.join(e for e in word if e.isalnum())
+
+    if len(word) > 40: return True
+
     #remove numbers
     if word.isnumeric(): return True
+
     #remove any common words
-    bad_words = ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "arr." "arranger", "arranged", "arrangement", "ar", "transcription", "transc", "Choral", "wrote", "version", "in"]
+    bad_words = ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental"]
     if word in bad_words: return True
 
     return False
@@ -182,18 +186,22 @@ def basicClean(composer):
     composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//")
     composer = str.title(str.lower(composer))
 
-    #remove any entries with arranger
+    #remove any entries with arranger at index 0
     composerToList = composer.split(" ")
     if disqualifyingWords(composerToList): return "unknown"
 
     #remove known bad words
     composerStringList = filter(lambda x: not badWord(x),composerToList)
+
+    #remove longer than 3 words?
     composer = " ".join(composerStringList)
 
+    if len(composer.split(" "))>4: return "unknown"
+
     #length check
-    if len(composer) > 45 or len(composer) < 4 :return "unknown"
+    if len(composer) < 4 :return "unknown"
     # print(composer)
-    return composer
+    return composer.strip(" ").strip("-")
 
 def writeFirstComposer(composer,jsonObj,f, csv_file_dir,ID):
     #very basic cleaning of name
