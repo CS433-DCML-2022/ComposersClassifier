@@ -83,7 +83,7 @@ def extract_composer(ID: str,
     print(f"Parsing ID {ID}")
     with open(json_file, "r", encoding='utf-8') as f:
         jsondict = json.load(f)
-    if skip and "first_composer" in jsondict:
+    if skip and "__first_composer__" in jsondict:
         print(f"Skipped ID {ID}")
         return
 
@@ -128,7 +128,7 @@ def extract_composer(ID: str,
             return "unknown" 
 
     first_composer = get_name()
-    jsondict["first_composer"]=first_composer
+    jsondict["__first_composer__"]=first_composer
     write_json(jsondict, first_composer!="unknown")
     print(json_file + f' overwritten, copied? {first_composer!="unknown"}')
     return
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--json_folder', default='./metadata')
     parser.add_argument('-c', '--composer_folder', default='./metadata_with_composer')
     parser.add_argument('-n', '--num_cpus', default=12, help='Number of CPUs to be used in parallel.')
-    parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key first_composer')
+    parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key __first_composer__')
 
     args = parser.parse_args()
     main(args)
