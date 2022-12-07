@@ -60,14 +60,15 @@ def main(args):
                                         ))
     n_files = len(futures)
     print(f"Processing {n_files} JSON files on {args.num_cpus} CPUs.")
-    records = {}
-    progress_bar = tqdm(total=n_files)
-    while len(futures):
-        finished, futures = ray.wait(futures)
-        for ID, row in ray.get(finished):
-            records[ID] = row
-        progress_bar.update(len(finished))
-    progress_bar.close()
+    # records = {}
+    # progress_bar = tqdm(total=n_files)
+    # while len(futures):
+    #     finished, futures = ray.wait(futures)
+    #     for ID, row in ray.get(finished):
+    #         records[ID] = row
+    #     progress_bar.update(len(finished))
+    # progress_bar.close()
+    records = dict(ray.get(futures))
 
     tallied = pd.DataFrame.from_dict(records, orient='index')
     tallied.index.rename('ID', inplace=True)
