@@ -73,11 +73,15 @@ def main(args):
     tallied = pd.DataFrame.from_dict(records, orient='index')
     tallied.index.rename('ID', inplace=True)
     tallied.loc[:, ['converted', 'features']] = tallied[['converted', 'features']].astype('Int64')
-    tallied.to_csv('tallied.tsv', sep='\t')
-    print(f"'{os.path.abspath('tallied.tsv')}' successfully written.")
+    zip_name = args.file_name + '.zip'
+    tsv_name = args.file_name + '.tsv'
+    tallied.to_csv(zip_name, sep='\t', compression=dict(method='zip',
+                                                  archive_name=tsv_name))
+    print(f"'{os.path.abspath(zip_name)}' successfully written.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process JSON AND MSCZ.""")
+    parser.add_argument('--file_name', default='tallied')
     parser.add_argument('-s', '--scores_folder', default='./mscz')
     parser.add_argument('-j', '--json_folder', default='./metadata')
     parser.add_argument('-c', '--conversion_folder', default='./converted_mscz')
