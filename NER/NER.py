@@ -160,7 +160,7 @@ def disqualifyingWords(wordList):
 #if any bad words then remove them
 def badWord(word):
     #normalize
-    if word.isnumeric(): return True
+    # if word.isnumeric(): return True
     word=str.lower(word)
     word = ''.join(e for e in word if e.isalnum())
 
