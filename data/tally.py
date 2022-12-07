@@ -28,6 +28,8 @@ def read_json(ID: str,
     id_row['original'] = original
     if original:
         id_row['terminated'] = "__terminated__" in jsondict
+        if '__first_composer__' in jsondict:
+            id_row['first_composer'] = jsondict['__first_composer__']
         if 'last_error' in jsondict:
             id_row['last_error'] = jsondict['last_error']
         if os.path.isfile(converted_mscz_file):
