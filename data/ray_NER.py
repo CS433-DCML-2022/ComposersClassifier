@@ -20,21 +20,27 @@ def basic_clean(composer: str) -> str:
 
         #remove any entries with arranger at index 0
         composerToList = composer.split(" ")
-        if disqualifyingWords(composerToList): return "unknown"
+        if disqualifyingWords(composerToList): return None
+
+        #trim composer names up until date
+        for i, word in enumerate(composerToList):
+            word = ''.join(l for l in word if l.isalnum())
+            if len(word) == 0 : continue
+            if word[0].isnumeric():
+                composerToList = composerToList[:i]
+                break
 
         #remove known bad words
         composerStringList = filter(lambda x: not badWord(x),composerToList)
 
         composer = " ".join(composerStringList)
-        for i, word in composerStringList:
-            if word[0].isnumeric():
-                composer = " ".join(composerStringList[:i])
-                break
-        #remove longer than 3 words?
-        if len(composer.split(" "))>=4: return "unknown"
+
+        #remove longer than 4 words
+        if len(composer.split(" "))>4: return None
 
         #length check
-        if len(composer) < 4 :return "unknown"
+        if len(composer) < 4 :return None
+
         # print(composer)
         return composer.strip(" ").strip("-")
 
@@ -43,17 +49,17 @@ def basic_clean(composer: str) -> str:
 def disqualifyingWords(wordList):
     for index,word in enumerate(wordList):
         word=str.lower(word)
-        word = ''.join(e for e in word if e.isalnum())
-
+        word = ''.join(e for e in word if e.isalnum()) 
         if 'arr' in word and index == 0: return True
-        if 'trans' in word and index == 0: return True
-
+        if 'transcription' in word and index == 0: return True
+        if 'transcripción' in word and index == 0: return True
+        if 'trans'in word and index == 0: return True
+        if 'trad'in word and index == 0: return True
     return False
 
 #if any bad words then remove them
 def badWord(word):
     #normalize
-    if word.isnumeric(): return True
     word=str.lower(word)
     word = ''.join(e for e in word if e.isalnum())
 
@@ -63,7 +69,7 @@ def badWord(word):
     if word.isnumeric(): return True
 
     #remove any common words
-    bad_words = set(["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental", "musik", "bei", "write", "wrote"])
+    bad_words = ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental", "musik", "aritst", "anon", "anonymous", "compositor", "pianist", "designed", "played", "bei", "wrote", "write" ]
     if word in bad_words: return True
 
     return False
@@ -77,7 +83,7 @@ def extract_composer(ID: str,
     print(f"Parsing ID {ID}")
     with open(json_file, "r", encoding='utf-8') as f:
         jsondict = json.load(f)
-    if skip and "__first_composer__" in jsondict:
+    if skip and "first_composer" in jsondict:
         print(f"Skipped ID {ID}")
         return
 
@@ -91,33 +97,38 @@ def extract_composer(ID: str,
                 json.dump(jsondict, f)
 
     def get_name() -> str:
+        #retrieve all possible composer fields
+        possibleComposers = list()
         ms3dict = jsondict.get("ms3_metadata")
         if ms3dict:
             field1 = ms3dict.get("composer")
             if field1:
-                return basic_clean(field1)
+                c1 = basic_clean(field1)
+                if c1: possibleComposers.append(c1)
             field2 = ms3dict.get("composer_text")
             if field2:
-                return basic_clean(field2)
+                c2 = basic_clean(field2)
+                if c2: possibleComposers.append(c2)
         mscoredict = jsondict.get("musescore_metadata")
         if mscoredict:
             mscoredict = mscoredict.get("metadata")
-            if not mscoredict:
-                return "unknown"
-            field1 = mscoredict.get("composer")
-            if field1:
-                print("Second dict, first field")
-                return basic_clean(field1)
+            field3 = mscoredict.get("composer")
+            if field3:
+                c3 = basic_clean(field3)
+                if c3: possibleComposers.append(c3)
             textDataField = mscoredict.get("textFramesData")
             if textDataField:
                 textDataComposersList = textDataField.get("composers")
                 if textDataComposersList:
-                    print("First dict, second field")
-                    return basic_clean(textDataComposersList[0])
-        return "unknown"
+                    for textDataComposer in textDataComposersList:
+                        tdc = basic_clean(textDataComposer)
+                        if tdc: possibleComposers.append(tdc)
+        if len(possibleComposers) > 0: return possibleComposers[0]
+        else: 
+            return "unknown" 
 
     first_composer = get_name()
-    jsondict["__first_composer__"]=first_composer
+    jsondict["first_composer"]=first_composer
     write_json(jsondict, first_composer!="unknown")
     print(json_file + f' overwritten, copied? {first_composer!="unknown"}')
     return
@@ -158,7 +169,7 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--json_folder', default='./metadata')
     parser.add_argument('-c', '--composer_folder', default='./metadata_with_composer')
     parser.add_argument('-n', '--num_cpus', default=12, help='Number of CPUs to be used in parallel.')
-    parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key __first_composer__')
+    parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key first_composer')
 
     args = parser.parse_args()
     main(args)
