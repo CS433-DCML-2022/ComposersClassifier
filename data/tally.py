@@ -6,6 +6,65 @@ import ray
 import json
 import pandas as pd
 from tqdm import tqdm
+import csv
+
+
+#Collects all relevant fields to be written to tsv to be processed later
+#saves the need to process all files again if composer processing script updates
+def get_all_relevant_fields(jsondict, tsv_dir):
+
+    #retrieve all possible composer fields
+    possibleComposers = list()
+    possibleTitles = list()
+    possibleDescriptions = list()
+
+    #composer fields
+    ms3dict = jsondict.get("ms3_metadata")
+    if ms3dict:
+        field1 = ms3dict.get("composer")
+        if field1:
+            possibleComposers.append(field1)
+        field2 = ms3dict.get("composer_text")
+        if field2:
+            possibleComposers.append(field2)
+    mscoredict = jsondict.get("musescore_metadata")
+    if mscoredict:
+        mscoredict = mscoredict.get("metadata")
+        field3 = mscoredict.get("composer")
+        if field3:
+            possibleComposers.append(field3)
+        textDataField = mscoredict.get("textFramesData")
+        if textDataField:
+            textDataComposersList = textDataField.get("composers")
+            if textDataComposersList:
+                for textDataComposer in textDataComposersList:
+                    possibleComposers.append(textDataComposer)
+
+    #retrieve other fields of interest for processing (all titles, subtitles and description fields)
+    title1 = jsondict["title"]
+    if title1: possibleTitles.append(title1)
+    if ms3dict:
+        title2 = ms3dict["title_text"]
+        if title2: possibleTitles.append(title2)
+
+    desc1 = jsondict["description"]
+    if desc1: possibleDescriptions.append(desc1)
+    if mscoredict:
+        title3 = mscoredict.get("title")
+        if title3: possibleTitles.append(t)
+        textDataField = mscoredict.get("textFramesData")
+        if textDataField:
+            subtitles = mscoredict["subtitles"]
+            if subtitles:
+                for sub in subtitles: possibleDescriptions.append(sub)
+            titles = mscoredict["titles"]
+            if titles:
+                for t in titles: possibleTitles.append(t)
+
+    with open(tsv_dir, 'w', newline='') as tsvfile:
+        writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
+        writer.writerow([possibleComposers,possibleTitles,possibleDescriptions])
+
 
 
 @ray.remote
