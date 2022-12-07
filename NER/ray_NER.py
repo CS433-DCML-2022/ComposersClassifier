@@ -8,6 +8,66 @@ import json
 from zipfile import ZipFile
 
 
+def basic_clean(composer: str) -> str:
+        #normalize
+        composer = composer.strip(" ").strip("\n")
+
+        #remove multiple composers?
+        composer = composer.split("\n")[0].split(",")[0]
+
+        composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//")
+        composer = str.title(str.lower(composer))
+
+        #remove any entries with arranger at index 0
+        composerToList = composer.split(" ")
+        if disqualifyingWords(composerToList): return "unknown"
+
+        #remove known bad words
+        composerStringList = filter(lambda x: not badWord(x),composerToList)
+
+        composer = " ".join(composerStringList)
+        for i, word in composerStringList:
+            if word[0].isnumeric():
+                composer = " ".join(composerStringList[:i])
+                break
+        #remove longer than 3 words?
+        if len(composer.split(" "))>=4: return "unknown"
+
+        #length check
+        if len(composer) < 4 :return "unknown"
+        # print(composer)
+        return composer.strip(" ").strip("-")
+    
+    
+#determine if composer is actually arranger
+def disqualifyingWords(wordList):
+    for index,word in enumerate(wordList):
+        word=str.lower(word)
+        word = ''.join(e for e in word if e.isalnum()) 
+        
+        if 'arr' in word and index == 0: return True
+        if 'trans' in word and index == 0: return True
+
+    return False
+
+#if any bad words then remove them
+def badWord(word):
+    #normalize
+    if word.isnumeric(): return True
+    word=str.lower(word)
+    word = ''.join(e for e in word if e.isalnum())
+
+    if len(word) > 40: return True
+
+    #remove numbers
+    if word.isnumeric(): return True
+
+    #remove any common words
+    bad_words = set(["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental", "musik", "bei", "write", "wrote"])
+    if word in bad_words: return True
+
+    return False
+
 @ray.remote
 def extract_composer(ID: str,
                  json_file: str,
@@ -29,12 +89,35 @@ def extract_composer(ID: str,
         if non_empty:
             with open(json_file_with_composer, "w", encoding='utf-8') as f:
                 json.dump(jsondict, f)
-
-
-    first_composer = "unknown"
-    # extract first_composer
     
-    jsondict["first_composer"]=first_composer
+    def get_name() -> str:
+        ms3dict = jsondict.get("ms3_metadata")
+        if ms3dict:
+            field1 = ms3dict.get("composer")
+            if field1:
+                return basic_clean(field1)
+            field2 = ms3dict.get("composer")
+            if field2:
+                return basic_clean(field2)
+        mscoredict = jsondict.get("musescore_metadata")    
+        if mscoredict:
+            mscoredict = mscoredict.get("metadata")
+            if not mscoredict:
+                return "unknown"
+            field1 = mscoredict.get("composer")
+            if field1:
+                print("Second dict, first field")
+                return basic_clean(field1)
+            textDataField = mscoredict.get("textFramesData")
+            if textDataField:
+                textDataComposersList = textDataField.get("composers")
+                if textDataComposersList:
+                    print("First dict, second field")
+                    return basic_clean(textDataComposersList[0])
+        return "unknown"
+    
+    first_composer = get_name()    
+    jsondict["__first_composer__"]=first_composer
     write_json(jsondict, first_composer!="unknown")
     print(json_file + f' overwritten, copied? {first_composer!="unknown"}')
     return
