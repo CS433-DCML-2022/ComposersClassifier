@@ -37,14 +37,14 @@ def basic_clean(composer: str) -> str:
         if len(composer) < 4 :return "unknown"
         # print(composer)
         return composer.strip(" ").strip("-")
-    
-    
+
+
 #determine if composer is actually arranger
 def disqualifyingWords(wordList):
     for index,word in enumerate(wordList):
         word=str.lower(word)
-        word = ''.join(e for e in word if e.isalnum()) 
-        
+        word = ''.join(e for e in word if e.isalnum())
+
         if 'arr' in word and index == 0: return True
         if 'trans' in word and index == 0: return True
 
@@ -89,17 +89,17 @@ def extract_composer(ID: str,
         if non_empty:
             with open(json_file_with_composer, "w", encoding='utf-8') as f:
                 json.dump(jsondict, f)
-    
+
     def get_name() -> str:
         ms3dict = jsondict.get("ms3_metadata")
         if ms3dict:
             field1 = ms3dict.get("composer")
             if field1:
                 return basic_clean(field1)
-            field2 = ms3dict.get("composer")
+            field2 = ms3dict.get("composer_text")
             if field2:
                 return basic_clean(field2)
-        mscoredict = jsondict.get("musescore_metadata")    
+        mscoredict = jsondict.get("musescore_metadata")
         if mscoredict:
             mscoredict = mscoredict.get("metadata")
             if not mscoredict:
@@ -115,8 +115,8 @@ def extract_composer(ID: str,
                     print("First dict, second field")
                     return basic_clean(textDataComposersList[0])
         return "unknown"
-    
-    first_composer = get_name()    
+
+    first_composer = get_name()
     jsondict["__first_composer__"]=first_composer
     write_json(jsondict, first_composer!="unknown")
     print(json_file + f' overwritten, copied? {first_composer!="unknown"}')
@@ -156,7 +156,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process JSON AND MSCZ.""")
     parser.add_argument('-j', '--json_folder', default='./metadata')
-    parser.add_argument('-c', '--composer_folder', default='./metadata_with_composere')
+    parser.add_argument('-c', '--composer_folder', default='./metadata_with_composer')
     parser.add_argument('-n', '--num_cpus', default=12, help='Number of CPUs to be used in parallel.')
     parser.add_argument('-a', '--all', action='store_true', help='Do not skip JSON files that include the key __first_composer__')
 
