@@ -14,7 +14,7 @@ The specific JSON fields are:
         - from the inner "textFramesData dictionary:
             - first entry from the list "composers"
 
-If a string is found in any of the fields the search terminates. (Note: Possibly some composer fields are more reliable than others, in this case the order of checking them is important.)
+All fields are searched and added to a composers list. At present the first of the list of found composers is written to the json. (Note: Possibly some composer fields are more reliable than others, in this case the order of checking them is important.)
 
 Initial data analysis contained in labelInspect.ipynb was used to determine the best methods to clean composer strings.
 
@@ -29,9 +29,11 @@ c) Any non alphanumeric characters are removed except (" ",",","-",".","\","/") 
 
 d) String format is modified to follow 'title' convention. i.e. each separate word is capitalized
 
-e) String is split with space delimiter and resulting list is passed to a function to check the presence of disqualifying words. Currently this involves  checking for 'arr' or 'transcription' substrings in the word located at the first index of the split string. This is deemed a disqualifying condition and the composer will be set to unknown. If these disqualifying substrings are located at an alternative index we assume it is most likely after a composer.
+e) String is split with space delimiter and resulting list is passed to a function to check the presence of disqualifying words. Currently this involves  checking for 'arr', 'transcription', 'transcripcion', 'trans'  substrings in the word located at the first index of the split string. This is deemed a disqualifying condition and the composer will be set to unknown. If these disqualifying substrings are located at an alternative index we assume it is most likely after a composer.
 
-d) Bad words are removed from the string list through filtering the space delimited substrings in the following process:
+f) Space delimited substring list is trimmed to the first index containing a first character than is a number. (e.g. ['Johann', 'Sebastian', 'Bach', '17th' 'Century'] -> ['Johann', 'Sebastian', 'Bach'])
+
+g) Bad words are removed from the string list through filtering the space delimited substrings in the following process:
 
     i) String is set to lowercase and all non-alpha numeric components are removed for the following checks:
 
@@ -41,13 +43,13 @@ d) Bad words are removed from the string list through filtering the space delimi
 
     iv) Comparison of string with a list of bad words. Bad words were sought from manual inspection of the 1000 json subsample in addition to some relevant related words likely to exist in a larger sample. If the string is in the list, we remove it.
 
-    Bad word list currently includes ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental"]  
+    Bad word list currently includes ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental", "musik", "aritst", "anon", "anonymous", "compositor", "pianist", "designed", "played" ]
 
-f) String list is joined again with space delimiters
+h) String list is joined again with space delimiters
 
-h) If the length of the joined composer string is strictly less than 4 characters it is removed. 
+i) If the length of the joined composer string is strictly less than 4 characters it is removed. 
 
-i) Final strip of whitespace and "-" characters from outside of final composer string
+j) Final strip of whitespace and "-" characters from outside of final composer string
 
 ****
 Notes for cleaning impovements:
