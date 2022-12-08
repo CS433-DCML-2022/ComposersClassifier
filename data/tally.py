@@ -5,13 +5,12 @@ from typing import Tuple
 import ray
 import json
 import pandas as pd
-from tqdm import tqdm
 import csv
 
 
 #Collects all relevant fields to be written to tsv to be processed later
 #saves the need to process all files again if composer processing script updates
-def get_all_relevant_fields(jsondict, tsv_dir):
+def get_all_relevant_fields(jsondict: dict, tsv_dir: str):
 
     #retrieve all possible composer fields
     possibleComposers = list()
@@ -104,7 +103,8 @@ def main(args):
     json_folder = os.path.abspath(args.json_folder)
     ORIGINAL_SCORES_FOLDER = ray.put(os.path.abspath(args.scores_folder))
     CONVERSION_FOLDER = ray.put(os.path.abspath(args.conversion_folder))
-    FEATURES_FOLDER = ray.put(os.path.abspath(args.features_folder))
+    features_folder = os.path.abspath(args.features_folder)
+    FEATURES_FOLDER = ray.put(features_folder)
 
     print("Collecting futures...")
     futures = []
@@ -112,6 +112,10 @@ def main(args):
         if not entry.is_file():
             continue
         ID = os.path.splitext(entry.name)[0]
+        if args.skip:
+            zip_features_file = os.path.join(features_folder, ID + ".zip")
+            if not os.path.isfile(zip_features_file):
+                continue
         json_file = entry.path
         futures.append(read_json.remote(ID=ID,
                                         json_file=json_file,
@@ -142,6 +146,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process JSON AND MSCZ.""")
+    parser.add_argument('--skip', action='store_true', help="This flag will skip JSON files of scores for which no features are available.")
     parser.add_argument('--file_name', default='tallied')
     parser.add_argument('-s', '--scores_folder', default='./mscz')
     parser.add_argument('-j', '--json_folder', default='./metadata')
