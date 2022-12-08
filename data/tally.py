@@ -36,15 +36,16 @@ def get_all_relevant_fields(jsondict: dict) -> dict:
         if textDataField:
             textDataComposersList = textDataField.get("composers")
             if textDataComposersList:
-                for textDataComposer in textDataComposersList and textDataComposer != '':
-                    possibleComposers.append(textDataComposer)
+                for textDataComposer in textDataComposersList:
+                    if textDataComposer != '':
+                        possibleComposers.append(textDataComposer)
 
     #retrieve other fields of interest for processing (all titles, subtitles and description fields)
     title1 = jsondict["title"]
     if title1:
         possibleTitles.append(title1)
     if ms3dict:
-        title2 = ms3dict["title_text"]
+        title2 = ms3dict.get("title_text")
         if title2:
             possibleTitles.append(title2)
 
@@ -54,16 +55,18 @@ def get_all_relevant_fields(jsondict: dict) -> dict:
     if mscoredict:
         title3 = mscoredict.get("title")
         if title3:
-            possibleTitles.append(t)
+            possibleTitles.append(title3)
         if textDataField:
-            subtitles = mscoredict["subtitles"]
+            subtitles = mscoredict.get("subtitles")
             if subtitles:
-                for sub in subtitles and sub != '':
-                    possibleDescriptions.append(sub)
-            titles = mscoredict["titles"]
+                for sub in subtitles:
+                    if sub != '':
+                        possibleDescriptions.append(sub)
+            titles = mscoredict.get("titles")
             if titles:
-                for t in titles and t != '':
-                    possibleTitles.append(t)
+                for t in titles:
+                    if t != '':
+                        possibleTitles.append(t)
 
     result = {}
     for column, values in zip(('composer', 'title', 'description') ,(possibleComposers,possibleTitles,possibleDescriptions)):
@@ -145,7 +148,8 @@ def main(args):
 
     tallied = pd.DataFrame.from_dict(records, orient='index')
     tallied.index.rename('ID', inplace=True)
-    tallied.loc[:, ['converted', 'features']] = tallied[['converted', 'features']].astype('Int64')
+    if not args.composer_mode:
+        tallied.loc[:, ['converted', 'features']] = tallied[['converted', 'features']].astype('Int64')
     zip_name = args.file_name + '.zip'
     tsv_name = args.file_name + '.tsv'
     tallied.to_csv(zip_name, sep='\t', compression=dict(method='zip',
