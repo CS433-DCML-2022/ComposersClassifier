@@ -10,7 +10,7 @@ import csv
 
 #Collects all relevant fields to be written to tsv to be processed later
 #saves the need to process all files again if composer processing script updates
-def get_all_relevant_fields(jsondict: dict, tsv_dir: str):
+def get_all_relevant_fields(jsondict: dict) -> dict:
 
     #retrieve all possible composer fields
     possibleComposers = list()
@@ -36,33 +36,40 @@ def get_all_relevant_fields(jsondict: dict, tsv_dir: str):
         if textDataField:
             textDataComposersList = textDataField.get("composers")
             if textDataComposersList:
-                for textDataComposer in textDataComposersList:
+                for textDataComposer in textDataComposersList and textDataComposer != '':
                     possibleComposers.append(textDataComposer)
 
     #retrieve other fields of interest for processing (all titles, subtitles and description fields)
     title1 = jsondict["title"]
-    if title1: possibleTitles.append(title1)
+    if title1:
+        possibleTitles.append(title1)
     if ms3dict:
         title2 = ms3dict["title_text"]
-        if title2: possibleTitles.append(title2)
+        if title2:
+            possibleTitles.append(title2)
 
     desc1 = jsondict["description"]
-    if desc1: possibleDescriptions.append(desc1)
+    if desc1:
+        possibleDescriptions.append(desc1)
     if mscoredict:
         title3 = mscoredict.get("title")
-        if title3: possibleTitles.append(t)
-        textDataField = mscoredict.get("textFramesData")
+        if title3:
+            possibleTitles.append(t)
         if textDataField:
             subtitles = mscoredict["subtitles"]
             if subtitles:
-                for sub in subtitles: possibleDescriptions.append(sub)
+                for sub in subtitles and sub != '':
+                    possibleDescriptions.append(sub)
             titles = mscoredict["titles"]
             if titles:
-                for t in titles: possibleTitles.append(t)
+                for t in titles and t != '':
+                    possibleTitles.append(t)
 
-    with open(tsv_dir, 'w', newline='') as tsvfile:
-        writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
-        writer.writerow([possibleComposers,possibleTitles,possibleDescriptions])
+    result = {}
+    for column, values in zip(('composer', 'title', 'description') ,(possibleComposers,possibleTitles,possibleDescriptions)):
+        # remove duplicates and combine into a single value
+        result[column] = '; '.join(set(values))
+    return result
 
 
 
@@ -72,6 +79,7 @@ def read_json(ID: str,
               scores_folder: str,
               conversion_folder: str,
               features_folder: str,
+              composer_mode: bool = False,
               ) -> Tuple[str, dict]:
     # print(f"Looking up {json_file}")
     with open(json_file, "r", encoding='utf-8') as f:
@@ -80,20 +88,18 @@ def read_json(ID: str,
     original_mscz_file = os.path.join(scores_folder, score_name)
     converted_mscz_file = os.path.join(conversion_folder, score_name)
     zip_features_file = os.path.join(features_folder, ID + ".zip")
-
-    id_row = {}
-    original = os.path.isfile(original_mscz_file)
-    id_row['original'] = original
-    if original:
-        id_row['terminated'] = "__terminated__" in jsondict
-        if '__first_composer__' in jsondict:
-            id_row['first_composer'] = jsondict['__first_composer__']
-        if 'last_error' in jsondict:
-            id_row['last_error'] = jsondict['last_error']
-        if os.path.isfile(converted_mscz_file):
-            id_row['converted'] = os.stat(converted_mscz_file).st_size
-        if os.path.isfile(zip_features_file):
-            id_row['features'] = os.stat(zip_features_file).st_size
+    if composer_mode:
+        id_row = get_all_relevant_fields(jsondict)
+    else:
+        id_row = {}
+        original = os.path.isfile(original_mscz_file)
+        id_row['original'] = original
+        if original:
+            id_row['terminated'] = "__terminated__" in jsondict
+            if os.path.isfile(converted_mscz_file):
+                id_row['converted'] = os.stat(converted_mscz_file).st_size
+            if os.path.isfile(zip_features_file):
+                id_row['features'] = os.stat(zip_features_file).st_size
     return ID, id_row
 
 
@@ -105,6 +111,7 @@ def main(args):
     CONVERSION_FOLDER = ray.put(os.path.abspath(args.conversion_folder))
     features_folder = os.path.abspath(args.features_folder)
     FEATURES_FOLDER = ray.put(features_folder)
+    COMPOSER_MODE = ray.put(args.composer_mode)
 
     print("Collecting futures...")
     futures = []
@@ -112,7 +119,7 @@ def main(args):
         if not entry.is_file():
             continue
         ID = os.path.splitext(entry.name)[0]
-        if args.skip:
+        if args.composer_mode:
             zip_features_file = os.path.join(features_folder, ID + ".zip")
             if not os.path.isfile(zip_features_file):
                 continue
@@ -122,6 +129,7 @@ def main(args):
                                         scores_folder=ORIGINAL_SCORES_FOLDER,
                                         conversion_folder=CONVERSION_FOLDER,
                                         features_folder=FEATURES_FOLDER,
+                                        composer_mode=COMPOSER_MODE,
                                         ))
     n_files = len(futures)
     print(f"Processing {n_files} JSON files on {args.num_cpus} CPUs.")
@@ -146,7 +154,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process JSON AND MSCZ.""")
-    parser.add_argument('--skip', action='store_true', help="This flag will skip JSON files of scores for which no features are available.")
+    parser.add_argument('--composer_mode', action='store_true', help="Setting this flag means going only through successfully parsed files and tallying composer, title and description fields. "
+                                                            "Otherwise (by default), the script will go through all JSON files and tally information on which scores have been converted and parsed.")
     parser.add_argument('--file_name', default='tallied')
     parser.add_argument('-s', '--scores_folder', default='./mscz')
     parser.add_argument('-j', '--json_folder', default='./metadata')
