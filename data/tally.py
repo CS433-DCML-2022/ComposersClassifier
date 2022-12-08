@@ -71,7 +71,10 @@ def get_all_relevant_fields(jsondict: dict) -> dict:
     result = {}
     for column, values in zip(('composer', 'title', 'description') ,(possibleComposers,possibleTitles,possibleDescriptions)):
         # remove duplicates and combine into a single value
-        result[column] = '; '.join(set(values))
+        deduplicated = set(values)
+        value = '; '.join(s.replace('\t', ' ') for s in deduplicated)
+        if value != '':
+            result[column] = value
     return result
 
 
@@ -136,14 +139,6 @@ def main(args):
                                         ))
     n_files = len(futures)
     print(f"Processing {n_files} JSON files on {args.num_cpus} CPUs.")
-    # records = {}
-    # progress_bar = tqdm(total=n_files)
-    # while len(futures):
-    #     finished, futures = ray.wait(futures)
-    #     for ID, row in ray.get(finished):
-    #         records[ID] = row
-    #     progress_bar.update(len(finished))
-    # progress_bar.close()
     records = dict(ray.get(futures))
 
     tallied = pd.DataFrame.from_dict(records, orient='index')
