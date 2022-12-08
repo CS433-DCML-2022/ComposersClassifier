@@ -72,7 +72,7 @@ def get_all_relevant_fields(jsondict: dict) -> dict:
     for column, values in zip(('composer', 'title', 'description') ,(possibleComposers,possibleTitles,possibleDescriptions)):
         # remove duplicates and combine into a single value
         deduplicated = set(values)
-        value = '; '.join(s.replace('\t', ' ') for s in deduplicated)
+        value = '; '.join(deduplicated)
         if value != '':
             result[column] = value
     return result
@@ -146,9 +146,9 @@ def main(args):
     if not args.composer_mode:
         tallied.loc[:, ['converted', 'features']] = tallied[['converted', 'features']].astype('Int64')
     zip_name = args.file_name + '.zip'
-    tsv_name = args.file_name + '.tsv'
-    tallied.to_csv(zip_name, sep='\t', compression=dict(method='zip',
-                                                  archive_name=tsv_name))
+    csv_name = args.file_name + '.csv'
+    tallied.to_csv(zip_name, escapechar='\\', quoting= csv.QUOTE_ALL, compression=dict(method='zip',
+                                                  archive_name=csv_name))
     print(f"'{os.path.abspath(zip_name)}' successfully written.")
 
 if __name__ == "__main__":
