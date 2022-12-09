@@ -8,38 +8,46 @@ import json
 from zipfile import ZipFile
 
 
-def basic_clean(composer: str) -> str:
+def basic_clean(composer: str, debug: bool = False) -> str:
         #normalize
         composer = composer.strip(" ").strip("\n")
 
         #remove multiple composers?
         composer = composer.split("\n")[0].split(",")[0]
 
-        composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//")
+        #we dont want to remove other languages
+        composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//" or not e.isascii())
         composer = str.title(str.lower(composer))
 
         #remove any entries with arranger at index 0
         composerToList = composer.split(" ")
-        if disqualifyingWords(composerToList): return None
+        if disqualifyingWords(composerToList):
+            if debug: return 'DQ'; 
+            else : return None
 
         #trim composer names up until date
         for i, word in enumerate(composerToList):
             word = ''.join(l for l in word if l.isalnum())
             if len(word) == 0 : continue
-            if word[0].isnumeric():
+            #fixes bug where '三' is numeric
+            if word[0].isnumeric() and word[0].isascii():
                 composerToList = composerToList[:i]
                 break
 
         #remove known bad words
-        composerStringList = filter(lambda x: not badWord(x),composerToList)
+        composerStringList = [x for x in filter(lambda x: not badWord(x),composerToList)]
 
         composer = " ".join(composerStringList)
 
-        #remove longer than 4 words
-        if len(composer.split(" "))>4: return None
+        #remove longer than 5 words (allows for titles like, 'the x of the y')
+        if len(composer.split(" "))>5:             
+            if debug: return '>5'; 
+            else : return None
 
         #length check
-        if len(composer) < 4 :return None
+        if len(composer) < 4 :
+            if debug: return '<4'; 
+            else : return None
 
         # print(composer)
         return composer.strip(" ").strip("-")
@@ -50,18 +58,20 @@ def disqualifyingWords(wordList):
     for index,word in enumerate(wordList):
         word=str.lower(word)
         word = ''.join(e for e in word if e.isalnum()) 
-        if 'arr' in word and index == 0: return True
-        if 'transcription' in word and index == 0: return True
-        if 'transcripción' in word and index == 0: return True
-        if 'trans'in word and index == 0: return True
-        if 'trad'in word and index == 0: return True
+        if len(word) > 2:
+            #keep larry, barry and harry
+            if 'arr' in word[:3] and index == 0: return True
+            if 'transcription' in word and index == 0: return True
+            if 'transcripción' in word and index == 0: return True
+            if 'trans'in word and index == 0: return True
+            if 'trad'in word and index == 0: return True
     return False
 
 #if any bad words then remove them
 def badWord(word):
     #normalize
     word=str.lower(word)
-    word = ''.join(e for e in word if e.isalnum())
+    word= ''.join(e for e in word if e.isalnum())
 
     if len(word) > 40: return True
 
@@ -69,7 +79,7 @@ def badWord(word):
     if word.isnumeric(): return True
 
     #remove any common words
-    bad_words = ["ft","composer", "composed", "by", "comp", "words", "word", "and", "music", "piece", "pieces", "arr", "ar" "arranger", "arranged", "arrangement", "ar", "arrg", "transcription", "trans", "choral", "wrote", "version", "in", "music", "melody", "harmony", "created", "mel", "musical", "soundtrack", "game", "score", "version", "unknown", "musique", "original", "edit", "edited", "instrumental", "musik", "aritst", "anon", "anonymous", "compositor", "pianist", "designed", "played", "bei", "wrote", "write" ]
+    bad_words = ['and', 'anon', 'anonymous', 'ar', 'ararranger', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'bei', 'by', 'choral', 'comp', 'composed', 'composer', 'compositor', 'created', 'designed', 'edit', 'edited', 'ft', 'game', 'harmony', 'in', 'instrumental', 'known', 'me', 'mel', 'melody', 'music', 'music', 'musical', 'musik', 'musique', 'original', 'pianist', 'piece', 'pieces', 'played', 'score', 'soundtrack', 'trad', 'traditional', 'traditionell', 'tradicionel', 'trans', 'transcription', 'unknown', 'version', 'version', 'word', 'words', 'write', 'wrote', 'wrote']
     if word in bad_words: return True
 
     return False
