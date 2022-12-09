@@ -26,7 +26,7 @@ def basic_clean(composer: str, debug: bool = False) -> str:
             else : return None
         
         #Check for common composers
-        commonCheck = commonComposers(composerToList)
+        commonCheck = commonComposers([x.lower() for x in composerToList])
         if not (commonCheck == None): return commonCheck 
 
         #trim composer names up until date
@@ -93,6 +93,7 @@ def disqualifyingWords(wordList):
             if 'transcripción' in word and index == 0: return True
             if 'trans'in word and index == 0: return True
             if 'trad'in word and index == 0: return True
+            if 'unbekannt' in word: return True
     return False
 
 #if any bad words then remove them
@@ -114,13 +115,10 @@ def badWord(word):
 
 #check for common composers
 def commonComposers(names):
-    for name in names:
-        name=name.lower()
-        #bach
-        if 'bach' in name: return 'J. S. Bach'
-        if 'mozart' in name: return 'W. A. Mozart'
-        if 'beethoven'in name: return 'L. V. Beethoven'
-        if 'yohei' in name: return 'Y. Kato  加藤 洋平'
+    if 'mozart' in names: return 'W. A. Mozart'
+    if 'beethoven'in names: return 'L. V. Beethoven'
+    if 'yohei' in names: return 'Y. Kato  加藤 洋平'
+    if  'bach' in names: return 'J. S. Bach'
     return None
 
 def setNameInitials(words):
