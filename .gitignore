@@ -143,3 +143,6 @@ data/errors
 data/logs
 data/converted_mscz
 data/features
+data/metadata.csv
+data/del_metadata.csv
+data/slim_metadata.csv

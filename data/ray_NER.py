@@ -24,6 +24,10 @@ def basic_clean(composer: str, debug: bool = False) -> str:
         if disqualifyingWords(composerToList):
             if debug: return 'DQ'; 
             else : return None
+        
+        #Check for common composers
+        commonCheck = commonComposers(composerToList)
+        if not (commonCheck == None): return commonCheck 
 
         #trim composer names up until date
         for i, word in enumerate(composerToList):
@@ -39,19 +43,43 @@ def basic_clean(composer: str, debug: bool = False) -> str:
 
         composer = " ".join(composerStringList)
 
+
+        composer = charStrip(" ',.- ", composer)
+        #remove double spaces
+        composer = " ".join([x for x in composer.split(' ') if x])
+
+
         #remove longer than 5 words (allows for titles like, 'the x of the y')
-        if len(composer.split(" "))>5:             
+        if len(composer.split(" "))>5:   
+            composer= " ".join(composer.split(" ")[:2])         
             if debug: return '>5'; 
-            else : return None
+
+        if len(composer) >1:
+            composer = composer.split(' ')
+            composer = " ".join([x[0].upper()+"." if i < (len(composer)-1) else x for i,x in enumerate(composer) ])
 
         #length check
         if len(composer) < 4 :
             if debug: return '<4'; 
             else : return None
+        
+        if not symbolCheck(composer): return None
 
-        # print(composer)
-        return composer.strip(" ").strip("-")
+        if not composer == '': return composer; 
+        else: return None
 
+
+def symbolCheck(composer):
+    composer = ''.join(x for x in composer if x!='.' and x!=',' and x!='-' and x!=' ')
+    if len(composer) > 0: return True 
+    else: return False
+
+def charStrip(chars,word):
+    while not word==None:
+        for char in chars:
+            word = word.strip(char)
+        break
+    return word
 
 #determine if composer is actually arranger
 def disqualifyingWords(wordList):
@@ -79,10 +107,26 @@ def badWord(word):
     if word.isnumeric(): return True
 
     #remove any common words
-    bad_words = ['and', 'anon', 'anonymous', 'ar', 'ararranger', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'bei', 'by', 'choral', 'comp', 'composed', 'composer', 'compositor', 'created', 'designed', 'edit', 'edited', 'ft', 'game', 'harmony', 'in', 'instrumental', 'known', 'me', 'mel', 'melody', 'music', 'music', 'musical', 'musik', 'musique', 'original', 'pianist', 'piece', 'pieces', 'played', 'score', 'soundtrack', 'trad', 'traditional', 'traditionell', 'tradicionel', 'trans', 'transcription', 'unknown', 'version', 'version', 'word', 'words', 'write', 'wrote', 'wrote']
+    bad_words = ['and', 'anon', 'anonymous', 'ar', 'ararranger', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'bei', 'by', 'choral', 'comp', 'composed', 'composer', 'compositor', 'created', 'designed', 'edit', 'edited', 'ft', 'folk', 'game', 'harmony', 'in', 'instrumental', 'known', 'lyrics', 'me', 'mel', 'melody', 'music', 'música', 'music', 'musical', 'musik', 'musique', 'original', 'perform', 'performed', 'pianist', 'piece', 'pieces', 'played', 'song', 'score', 'soundtrack', 'text', 'trad', 'traditional', 'traditionell', 'tradicionel', 'trans', 'transcription', 'unknown', 'version', 'version', 'word', 'words', 'write', 'written', 'wrote', 'wrote']
     if word in bad_words: return True
 
     return False
+
+#check for common composers
+def commonComposers(names):
+    for name in names:
+        name=name.lower()
+        #bach
+        if 'bach' in name: return 'J. S. Bach'
+        if 'mozart' in name: return 'W. A. Mozart'
+        if 'beethoven'in name: return 'L. V. Beethoven'
+        if 'yohei' in name: return 'Y. Kato  加藤 洋平'
+    return None
+
+def setNameInitials(words):
+    return [x[0].upper()+"." if i < len(words)-1 else x for i,x in enumerate(words) ]
+
+
 
 @ray.remote
 def extract_composer(ID: str,
