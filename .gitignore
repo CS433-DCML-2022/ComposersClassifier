@@ -146,3 +146,5 @@ data/features
 data/metadata.csv
 data/del_metadata.csv
 data/slim_metadata.csv
+data/ner_metadata.csv
+data/ner_error_metadata.csv
