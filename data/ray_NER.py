@@ -19,6 +19,9 @@ def basic_clean(composer: str, debug: bool = False) -> str:
         composer= ''.join(e for e in composer if e.isalnum() or e==" " or e=="," or e=="-" or e=="." or e=="\\" or e=="//" or not e.isascii())
         composer = str.title(str.lower(composer))
 
+        #Insert space after all .
+        composer = ". ".join(composer.split('.'))
+
         #remove any entries with arranger at index 0
         composerToList = composer.split(" ")
         if disqualifyingWords(composerToList):
@@ -45,6 +48,8 @@ def basic_clean(composer: str, debug: bool = False) -> str:
 
 
         composer = charStrip(" ',.- ", composer)
+    
+        
         #remove double spaces
         composer = " ".join([x for x in composer.split(' ') if x])
 
