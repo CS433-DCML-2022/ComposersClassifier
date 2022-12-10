@@ -110,7 +110,7 @@ def badWord(word):
     #remove any common words
     bad_words = ['and', 'anon', 'anonymous', 'ar', 'ararranger', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'bei', 'by', 'choral', 'comp', 'composed', 'composer', 'compositor', 'created', 'designed', 'edit', 'edited', 'ft', 'folk', 'game', 'harmony', 'in', 'instrumental', 'known', 'lyrics', 'me', 'mel', 'melody', 'music', 'música', 'music', 'musical', 'musik', 'musique', 'original', 'perform', 'performed', 'pianist', 'piece', 'pieces', 'played', 'song', 'score', 'soundtrack', 'text', 'trad', 'traditional', 'traditionell', 'tradicionel', 'trans', 'transcription', 'unknown', 'version', 'version', 'word', 'words', 'write', 'written', 'wrote', 'wrote']
     if word in bad_words: return True
-
+    
     return False
 
 #check for common composers
@@ -119,6 +119,7 @@ def commonComposers(names):
     if 'beethoven'in names: return 'L. V. Beethoven'
     if 'yohei' in names: return 'Y. Kato  加藤 洋平'
     if  'bach' in names: return 'J. S. Bach'
+    if 'debussy' in names: return 'C. Debussy'
     return None
 
 def setNameInitials(words):
