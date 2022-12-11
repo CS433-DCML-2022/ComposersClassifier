@@ -147,4 +147,10 @@ data/metadata.csv
 data/del_metadata.csv
 data/slim_metadata.csv
 data/ner_metadata.csv
+data/ner_metadata1.csv
 data/ner_error_metadata.csv
+data/ner_error_metadata1.csv
+data/ner_metadata2_incomplete.csv
+data/ner_metadata3_incomplete.csv
+data/ner_metadata4_incomplete.csv
+data/ner_metadata4_init_incomplete.csv

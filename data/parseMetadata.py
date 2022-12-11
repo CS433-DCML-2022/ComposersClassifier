@@ -46,13 +46,13 @@ def main(args):
                         title,desc = line[1].split(';'),line[2].split(';')
                         titleEntities,descEntities = None,None
                         if title:
-                            titleEntities = namedEntityRecognition(ID," ".join(title).lower(), modelDict ,  checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
-                            if titleEntities: titleEntities = [basic_clean(x) for x in titleEntities if x]; 
+                            titleEntities = namedEntityRecognition(ID," ".join(title), modelDict ,  checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
+                            if titleEntities: titleEntities = [basic_clean(x, strict=True,initials=True) for x in titleEntities if x]; titleEntities = list(set(titleEntities))
                             if titleEntities: titleEntities = "; ".join([x for x in titleEntities if x]).title()
                             else: titleEntities = None
                         if desc:
-                            descEntities = namedEntityRecognition(ID," ".join(desc).lower(), modelDict , checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
-                            if descEntities: descEntities = [basic_clean(x) for x in descEntities if x]; 
+                            descEntities = namedEntityRecognition(ID," ".join(desc), modelDict , checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
+                            if descEntities: descEntities = [basic_clean(x, strict=True, initials=True) for x in descEntities if x]; descEntities = list(set(descEntities))
                             if descEntities: descEntities = "; ".join([x for x in descEntities if x]).title()
                             else: descEntities = None
                             

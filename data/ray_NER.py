@@ -60,7 +60,7 @@ def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, compo
     #Detect language - maybe useful feature / can be used to select correct model
     try: lang = detect(stringToParse) 
     except: 
-        print("failed to detect language of query " + stringToParse + " continuing with en")
+        # print("failed to detect language of query " + stringToParse + " continuing with en")
         #parse as english?
         lang = 'en'
 
@@ -72,12 +72,12 @@ def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, compo
 
         #parse string with given model
         doc = modelDict.get(lang)(stringToParse)
-        properNouns = [ent.text for ent in doc.ents ]
+        properNouns = [ent.text for ent in doc.ents if ent.label_ == 'PERSON' ]
 
     #if we dont have language - we cant recognize the proper nouns
     else: 
         # if SAVELANG: json.dump(jsonObj,jsonFile)
-        print("language model not available for query " + stringToParse.replace('\n', " ") + " in lang " + lang)
+        # print("language model not available for query " + stringToParse.replace('\n', " ") + " in lang " + lang)
         error_csv_writer.writerow([ID,lang, stringToParse.replace('\n', " ") ])
 
         return None
@@ -103,7 +103,7 @@ def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, compo
     else: return None
 
 
-def basic_clean(composer: str, debug: bool = False) -> str:
+def basic_clean(composer: str, debug: bool = False, initials: bool = True, strict: bool = False) -> str:
         #normalize
         composer = composer.strip(" ").strip("\n")
 
@@ -143,16 +143,15 @@ def basic_clean(composer: str, debug: bool = False) -> str:
 
         composer = charStrip(" ',.- ", composer)
     
-        #remove double spaces
-        composer = " ".join([x for x in composer.split(' ') if x])
+        #remove double spaces and symbol only substrings "-."
+        composer = " ".join([x for x in composer.split(' ') if x and symbolCheck(x)])
 
-
-        #remove longer than 5 words (allows for titles like, 'the x of the y')
+        #remove longer than 5 words (allows for titles like, 'the x of the y') and replace with first 2 words
         if len(composer.split(" "))>5:   
             composer= " ".join(composer.split(" ")[:2])         
             if debug: return '>5'; 
 
-        if len(composer) >1:
+        if len(composer) >1 and initials:
             composer = composer.split(' ')
             composer = " ".join([x[0].upper()+"." if i < (len(composer)-1) else x for i,x in enumerate(composer) ])
 
@@ -161,7 +160,13 @@ def basic_clean(composer: str, debug: bool = False) -> str:
             if debug: return '<4'; 
             else : return None
         
+        #composer must have some non-symbols
         if not symbolCheck(composer): return None
+
+        #strict = no single name composers 
+        # (will remove any uncommon single named composers (e.g. John) (i.e. those that arent adressed in commonComposers))
+        if strict: 
+            if len(composer.split(' ')) == 1: return None
 
         if not composer == '': return composer; 
         else: return None
@@ -192,6 +197,11 @@ def disqualifyingWords(wordList):
             if 'trans'in word and index == 0: return True
             if 'trad'in word and index == 0: return True
             if 'unbekannt' in word: return True
+            if 'reelkey' in word: return True
+            if 'santa' in word and index ==0: return True
+            if 'hornpipekey' in word: return True
+            if 'strathspeykey' in word: return True
+            if 'polkakey' in word: return True
     return False
 
 #if any bad words then remove them
@@ -200,13 +210,13 @@ def badWord(word):
     word=str.lower(word)
     word= ''.join(e for e in word if e.isalnum())
 
-    if len(word) > 40: return True
+    if len(word) > 20: return True
 
     #remove numbers
     if word.isnumeric(): return True
 
     #remove any common words
-    bad_words = ['and', 'anon', 'anonymous', 'ar', 'ararranger', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'bei', 'by', 'choral', 'comp', 'composed', 'composer', 'compositor', 'created', 'designed', 'edit', 'edited', 'ft', 'folk', 'game', 'harmony', 'in', 'instrumental', 'known', 'lyrics', 'me', 'mel', 'melody', 'music', 'música', 'music', 'musical', 'musik', 'musique', 'original', 'perform', 'performed', 'pianist', 'piece', 'pieces', 'played', 'song', 'score', 'soundtrack', 'text', 'trad', 'traditional', 'traditionell', 'tradicionel', 'trans', 'transcription', 'unknown', 'version', 'version', 'word', 'words', 'write', 'written', 'wrote', 'wrote']
+    bad_words = ['-', '-.', 'ago', 'allegro', 'alto', 'american', 'and', 'anon', 'anonymous', 'anthem', 'april', 'ar', 'ararranger', 'archived', 'aritst', 'arr', 'arranged', 'arrangement', 'arrg', 'august', 'australia', 'author', 'baritone', 'bass', 'battle', 'beat', 'bei', 'belgium', 'berlin', 'blues', 'by', 'capella', 'carol', 'castle', 'cdiscography', 'cello', 'chambers', 'choral', 'christmas', 'city', 'ckey', 'clarinet', 'cnote', 'comp', 'composed', 'composer', 'composition', 'compositor', 'created', 'crhythm', 'csource', 'ctranscription', 'current', 'dance', 'day', 'designed', 'deutschland', 'ding', 'dkey', 'dong', 'dream', 'drhythm', 'duet', 'dutch', 'early', 'edit', 'edited', 'eight', 'eighth', 'england', 'europa', 'february', 'fifth', 'first', 'five', 'fkey', 'folk', 'four', 'fourth', 'french', 'fribourg', 'friday', 'ft', 'game', 'genre', 'germany', 'gkey', 'gsource', 'harmony', 'hornpipe', 'httpwwwmusicavivacom', 'httpwwwmusicavivacommeter', 'hymn', 'in', 'instrumental', 'into', 'intro', 'irish', 'january', 'jesus', 'jig', 'jingle', 'joyful', 'july', 'june', 'jungle', 'key', 'known', 'language', 'late', 'length', 'length-14', 'length-18', 'live', 'london', 'lyrics', 'main', 'march', 'may', 'me', 'medley', 'mel', 'melody', 'merrily', 'merry', 'meter', 'midi', 'minor', 'monday', 'moon', 'morning', 'musescore', 'music', 'musical', 'musicxml', 'musik', 'musique', 'música', 'new', 'night', 'nine', 'ninth', 'no', 'november', 'october', 'one', 'original', 'perform', 'performed', 'pianist', 'piano', 'piece', 'pieces', 'played', 'present', 'quartet', 'races', 'rhythm', 'sacredhymn', 'saturday', 'sax', 'saxophone', 'scales', 'score', 'second', 'september', 'seven', 'seventh', 'sharp', 'silent', 'six', 'sixth', 'solo', 'song', 'soundtrack', 'string', 'sunday', 'ten', 'tenor', 'tenth', 'text', 'theme', 'third', 'three', 'thursday', 'time', 'tinwhistle', 'title', 'trad', 'tradicionel', 'traditional', 'traditionell', 'trans', 'transcribed', 'transcription', 'trio', 'trombone', 'tuba', 'tuesday', 'two', 'undertale', 'unknown', 'version', 'waltz', 'warmup', 'wednesday', 'winter', 'wip', 'word', 'words', 'write', 'written', 'wrote', 'year', 'years']
     if word in bad_words: return True
     
     return False
