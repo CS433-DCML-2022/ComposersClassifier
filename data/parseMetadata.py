@@ -2,10 +2,11 @@ import csv
 import os
 import argparse
 import sys
-from ray_NER import basic_clean, initModelDict, loadComposers, namedEntityRecognition
+from ray_NER import basic_clean, initModelDict, namedEntityRecognition
 
-''' Parse initial tally tsv into slim composers tsv'''
+'''Reduce metadata.csv into csv containing only clean composers'''
 
+#removes null bytes on input
 def fix_nulls(s):
     for line in s:
         yield line.replace('\0', ' ')
@@ -18,7 +19,6 @@ def main(args):
 
     if parseTextNER:
         modelDict = initModelDict()
-        # composersDict,composersList = loadComposers(composer_dir)
 
     csv_dir = os.path.abspath(args.csv_file)
     slim_csv_dir = os.path.abspath('./slim_' + args.csv_file.lstrip('./'))
@@ -28,7 +28,7 @@ def main(args):
     if saveDel: deleted_csv_dir = os.path.abspath('./del_' + args.csv_file.lstrip('./'))
     if parseTextNER: ner_csv_dir = os.path.abspath('./ner_' + args.csv_file.lstrip('./')); error_csv_dir =os.path.abspath('./ner_error_' + args.csv_file.lstrip('./'))
 
-    #process large tsv line by line
+    #process large csv line by line
     with open(csv_dir) as f_in, open(slim_csv_dir, "w+") as f_out:
         writer = csv.writer(f_out, delimiter=',', lineterminator='\n')
         reader = csv.reader(fix_nulls(f_in), delimiter=",")
@@ -37,15 +37,15 @@ def main(args):
         for line in reader:
             ID,composers = line[0],line[3].split(';')
             cleanComposers = [basic_clean(composer) for composer in composers]
-            #if no composers reamining post-clean, don't write?
-            #write all good composers?
             if len(cleanComposers) > 0:
                 cleanComposers = [x for x in cleanComposers if x]
+                #write all good composers
                 if len(cleanComposers) > 0:
                     cleanComposers = list(set(cleanComposers))
                     cleanComposers = '; '.join(cleanComposers)
                     writer.writerow([ID,cleanComposers])
                     continue
+                #else use alternative text fields if specified -t -a
                 else: 
                     if parseTextNER or parseAll: 
                         title,desc = line[1].split(';'),line[2].split(';')
@@ -67,8 +67,6 @@ def main(args):
                     if saveDel: del_writer.writerow([ID,composers])
             else:
                 if saveDel: del_writer.writerow([ID,composers])
-                # print("No remaining composers for ID: " + str(ID) + ", Deleted: " + str(composers))
-                # del_writer.writerow([ID,[composer + " :" + basic_clean(composer,debug=True) for composer in composers]])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process Metadata CSV.""")

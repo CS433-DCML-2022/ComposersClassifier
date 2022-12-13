@@ -17,9 +17,6 @@ MULTIPLELANGUAGES = True
 ALTLANGS = {'de':["de_core_news_sm","de_dep_news_trf"], 'ko':["ko_core_news_sm","ko_core_news_lg"],'en':["en_core_web_sm","en_core_web_trf"],'ja':["ja_core_news_sm","ja_core_news_trf"],'ru':["ru_core_news_sm","ru_core_news_lg"],'it':["it_core_news_sm","it_core_news_lg"], 'es':["es_core_news_sm", "es_dep_new_trf"] }
 SMALLMODEL = True
 
-
-
-
 '''Draft Named Entity Recognition for retrieving possible composers from associated metadata'''
 
 #make composer list (composer,ID) and dict with ID -> [names]
@@ -55,16 +52,14 @@ def initModelDict():
 #used primarily for parsing B grade metadata fields
 def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, composersDict=None,composersList=None, error_csv_writer = None):
     
-
-    
-    #Detect language - maybe useful feature / can be used to select correct model
+    #Detect language - used to select correct model
     try: lang = detect(stringToParse) 
     except: 
         # print("failed to detect language of query " + stringToParse + " continuing with en")
         #parse as english?
         lang = 'en'
 
-    #if we have the language - try get the proper nouns
+    #if we have the language - try get the people entities
     if modelDict.get(lang):
 
         #remove special chars
@@ -76,29 +71,11 @@ def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, compo
 
     #if we dont have language - we cant recognize the proper nouns
     else: 
-        # if SAVELANG: json.dump(jsonObj,jsonFile)
         # print("language model not available for query " + stringToParse.replace('\n', " ") + " in lang " + lang)
         error_csv_writer.writerow([ID,lang, stringToParse.replace('\n', " ") ])
 
         return None
 
-    #composerCheck
-    # if KNOWNCOMPOSERSONLY:
-    #     possibleComposers = knownComposerCheck(composersList,properNouns)
-    
-    # if DEBUG: print(possibleComposers)
-    #take best / most similar candidate for each proper noun
-    #Note: if not KNOWN composers only, then all proper nouns will be selected (due to similarity/distance measure used)
-    # candidates = list()
-    # for prop in properNouns:
-    #     candidates.append(sorted(possibleComposers, key= lambda x: lev_dist(prop,x[0]))[0])
-    
-    #convert to stem version of composer to reduce variation if possible
-    # if CONVERT_COMPOSER_TO_STEM:
-    #     if lang != 'en':
-    #         candidates = [ [enName for enName in getStemOfComposerName(candidate,composersDict)] for candidate in candidates]
-    # else:
-    #     candidates = [name[0] for name in candidates]
     if properNouns: return [x for x in properNouns if x]
     else: return None
 
