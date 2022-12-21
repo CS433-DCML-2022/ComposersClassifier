@@ -144,3 +144,7 @@ data/metadata
 data/logs
 data/converted_mscz
 data/features
+final_git_arch/label_processing/metadata.csv
+final_git_arch/label_processing/slim_metadata.csv
+final_git_arch/label_processing/slim_all_fields_metadata.csv
+
