@@ -32,6 +32,20 @@ Project
   ## How to run
   Every step has a corresponding subfolder, in which you can run the scripts according to the $STEP.md explanatory file.
   ## Conversion
+  ```
+  cd conversion/
+  python3 convert.py
+  ```
   ## Preprocessing
+  ```
+  cd preprocessing/
+  python3 tally.py
+  ```
   ## Label Processing
+  ```
+  cd conversion/
+  python3 parseMetadata.py
+  ```
   ## ...
+  ## Confusion matrix plotting
+  
