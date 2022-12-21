@@ -13,9 +13,9 @@ def fix_nulls(s):
 
 def main(args):
     csv.field_size_limit(sys.maxsize)
-    saveDel = args.save_deleted_in_csv == 'True'
-    parseTextNER = args.parse_text_fields == 'True'
-    parseAll = args.parse_all_fields == 'True'
+    saveDel = args.deleted_to_csv
+    parseTextNER = args.text_fields
+    parseAll = args.all_fields
 
     if parseTextNER:
         modelDict = initModelDict()
@@ -71,8 +71,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Process Metadata CSV.""")
     parser.add_argument('-c', '--csv_file', default='./metadata.csv')
-    parser.add_argument('-d', '--save_deleted_in_csv', default='False')
-    parser.add_argument('-t', '--parse_text_fields', default='False')
-    parser.add_argument('-a', '--parse_all_fields', default='False')
+    parser.add_argument('-d', '--deleted_to_csv', action='store_true')
+    parser.add_argument('-t', '--text_fields', action='store_true')
+    parser.add_argument('-a', '--all_fields', action='store_true')
     args = parser.parse_args()
     main(args)

@@ -1,41 +1,45 @@
-Label processing pipeline
+# Label processing pipeline
 
-Relevant files: tally.py (metadata reduction), labelExtract.py (functions for label cleaning), parseMetadata.py (script for producing final labels)
+## Code files
+- labelExtract.py: functions for label cleaning
+- parseMetadata.py: script for producing final labels
 
+## Requirements
+- Python:
+  - langdetect
+  - spacy
+
+## Input files
+- metadata.csv: produced by tally.py as part of "Preprocessing" step
+
+## Output files
+- metadata_slim.csv: reduced version of metadata.csv with only lines for which a composer could be extracted
+## Summary
 Current label processing pipeline involves:
 - Producing set of clean labels from metadata 'composer' fields
 - Optional secondary label acquisition from alternative text fields
 
-1) Initial collection of all relevant metadata fields from each json File. This is performed as part of tally.py
 
-The specific 'composer' fields within the JSON are:
+## How to run
+`$ python3 parseMetadata.py $ARGS`
+``` 
+Args:
+    -c, --csv_file 'directory' to specify location of metadata.csv  
+    -a, --all_fields to use additional alternative metadata fields in label production  
+    -t, --text_fields  to use additional alternative metadata fields but save these entries to a separate file
+    -d, --deleted_to_csv to output strings for failed processing of alternative metadata fields
 
-- From the ms3_metadata dictionary:
-    - "composer" 
-    - "composer_text" 
-- from the "musescore_metadata" dictionary:
-    - from the inner "metadata" dictionary:
-        - "composer"
-        - from the inner "textFramesData dictionary:
-            - all entries from the list "composers"
+Output file(s):
+    default: metadata_slim.csv
+    if -a: slim_all_fields_metadata.csv
+    if -t: ner_metadata.csv, metadata_slim_csv
+    if -d: ner_metadata.csv, metadata_slim_csv ner_error_metadata.csv
+```
 
-Alternative text fields include:
 
-- "title"
-- "description" 
-- From the ms3_metadata dictionary:
-    - "title_text"
-- from the "musescore_metadata" dictionary:
- - from the inner "metadata" dictionary:
-    "title"
-    - from the inner "textData" dictionary:
-        - from the inner "textFramesData dictionary:
-            - all entries from the list "subtitles"
-            - all entries from the list "titles"
 
-Tally.py writes all fields for each ID to a metadata.csv for processing. (e.g. ID,[composerTextList],[titleTextList], [DescriptionTextList])
-
-2) A-grade labels
+## Processing explanation
+### A-grade labels
 
 ParseMetadata.py will read the list of composers for each ID in metadata.csv. As composer fields are input by users, they required cleaning. For each composer, text processing is used to clean the string in the following process:
 
@@ -88,7 +92,7 @@ ParseMetadata.py will read the list of composers for each ID in metadata.csv. As
 
     q) Optional: If strict setting is selected, only composers with a minimum of 2 names are retained. This increases quality of composers derived from alternative text fields.
 
-List of composers is written in semicolon separated form, along with it's relevant ID, to the specified slim_metadata.csv directory. E.g. (5925434,K. Totaka)
+List of composers is written in semicolon separated form, along with its relevant ID, to the specified slim_metadata.csv directory. E.g. (5925434,K. Totaka)
 
 
 3) B-Grade Labels

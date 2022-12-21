@@ -1,4 +1,6 @@
-Contents
+//TODO: merge with prev readme
+## Contents
+//TODO update
 ```
 Project
 |  classifying_script: simple script using pre-trained model, classifying a given notes.tsv file (or folder with argument --folder)
@@ -26,3 +28,10 @@ Project
 |   └─
 └─
   ```
+
+  ## How to run
+  Every step has a corresponding subfolder, in which you can run the scripts according to the $STEP.md explanatory file.
+  ## Conversion
+  ## Preprocessing
+  ## Label Processing
+  ## ...
