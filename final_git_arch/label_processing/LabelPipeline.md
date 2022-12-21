@@ -1,6 +1,6 @@
 Label processing pipeline
 
-Relevant files: tally.py (metadata reduction), ray_NER.py (functions for label cleaning), parseMetadata.py (script for producing final labels)
+Relevant files: tally.py (metadata reduction), labelExtract.py (functions for label cleaning), parseMetadata.py (script for producing final labels)
 
 Current label processing pipeline involves:
 - Producing set of clean labels from metadata 'composer' fields
