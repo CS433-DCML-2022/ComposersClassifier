@@ -156,3 +156,6 @@ data/ner_metadata4_incomplete.csv
 data/ner_metadata4_init_incomplete.csv
 data/ner_metadata5.csv
 data/slim_all_fields_metadata.csv
+final_git_arch/label_processing/metadata.csv
+final_git_arch/label_processing/slim_metadata.csv
+final_git_arch/label_processing/slim_all_fields_metadata.csv
