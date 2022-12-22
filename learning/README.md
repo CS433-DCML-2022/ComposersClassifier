@@ -72,8 +72,6 @@ We provide four datasets:
 To test the learning pipeline we recommend the reader to use a small dataset. The results we presented in the report were obtained using the biggest datasets.
 
 ### From the previous steps
-This is how we performed the data import, but due to the file sizes, we could not provide the features.zip file. Refer to the previously defined datasets.
-
 From the previous steps we have a features as well as an id_composers.tsv file. One may get a notes folder from this zip folder and a selection of id_composers.tsv using:
 ```
 python3 src/select_data.py -f features.zip -o ../data/myDataset/ -i ../data/myDataset/id_composers.tsv

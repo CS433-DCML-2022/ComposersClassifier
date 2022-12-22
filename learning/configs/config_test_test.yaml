@@ -1,10 +1,10 @@
 num_classes: 10
 delta: 32
-num_workers: 2
-save_path: './checkpoints/small_unbalanced'
-load_checkpoint: './trained_models/small_unbalanced.pt'
-ids_folder: '../data/small_unbalanced'
-csv_dir: '../data/small_unbalanced'
+num_workers: 4
+save_path: './checkpoints/max_balanced'
+load_checkpoint: './trained_models/max_balanced.pt'
+ids_folder: '../data/max_balanced'
+csv_dir: '../data/max_balanced'
 zipped: 1
-notes_zip_or_dir: '../../../selected_unbalanced/notes.zip'
+notes_zip_or_dir: '../../../selected_balanced_13000/notes.zip'
 cuda: 0

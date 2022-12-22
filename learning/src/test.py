@@ -31,10 +31,10 @@ def generate_prediction(model, device, test_loader, criterion, logger, SAVE_PATH
     test_loss /= len(test_loader.dataset)
 
     logger.info(
-        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100.0 * correct / len(test_loader.dataset):.0f}%)"
+        f"Test set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({100.0 * correct / len(test_loader.dataset):.1f}%)"
     )
     print(
-        "Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)".format(
+        "Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.1f}%)".format(
             test_loss,
             correct,
             len(test_loader.dataset),
