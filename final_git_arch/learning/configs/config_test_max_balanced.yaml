@@ -1,0 +1,10 @@
+num_classes: 10
+delta: 32
+num_workers: 2
+save_path: './checkpoints/max_balanced'
+load_checkpoint: './trained_models/max_balanced.pt'
+ids_folder: './data/max_balanced'
+csv_dir: './data/max_balanced'
+zipped: 1
+notes_zip_or_dir: './data/max_balanced/notes.zip'
+cuda: 0

@@ -1,0 +1,7 @@
+num_classes: 10
+num_workers: 2
+random_seed: 1
+ids_folder: './checkpoints/final_ids_small_unbalanced'
+csv_dir: '../selected_unbalanced'
+zipped: 1
+notes_zip_or_dir: '../selected_unbalanced/notes.zip'
