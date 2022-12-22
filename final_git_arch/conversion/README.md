@@ -1,10 +1,13 @@
-# Conversion pipeline
+# Conversion pipeline - not locally runnable
 
 ## Code files
 - convert.py: Ray-based conversion script
 
 ## Requirements
 - MuseScore executable (installed binary or .AppImage)
+
+**run $export QT_QPA_PLATFORM="offscreen" before any other command**
+
 - Python:
   - ms3: pip install git+https://github.com/johentsch/ms3@corpus_structure
   - ray
@@ -12,7 +15,8 @@
   - zipfile
 
 ## Input files
-- mscz/: folder containing all .mscz files, named $ID.mscx
+- mscz/: folder containing all .mscz files named $ID.mscz
+- json/: folder containing pre-extracted metadata files
 
 ## Output files
 - metadata/: folder containing all .json metadata files
@@ -30,6 +34,15 @@ Errors are logged, and except if --all argument is specified, does not rerun ove
 
 
 ## How to run
+
+### Example execution
+```
+export QT_QPA_PLATFORM="offscreen"
+export DATA="../data/preprocessing_toy_example/"
+python3  convert.py -a -m "/home/nathan/Downloads/MuseScore-4.0.0-x86_64.AppImage" -s $DATA/mscz/ -j $DATA/json/ -c $DATA/converted_mscz/ -f $DATA/features/ -u $DATA/conversion_errors/ -p $DATA/parsing_errors/ -n 4
+```
+### Details
+
 `$ python3 convert.py $ARGS`
 ``` 
 Args:
@@ -50,5 +63,3 @@ Output file(s):
         $CONVERSION_FOLDER/$ID.mscz
         $JSON_FOLDER/$ID.json
 ```
-
-

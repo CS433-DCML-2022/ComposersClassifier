@@ -11,9 +11,11 @@
 
 ## Input files
 - metadata.csv: produced by tally.py as part of "Preprocessing" step
+Download the metadata.csv file from https://drive.google.com/drive/folders/1Fdby1B12gKPfIL31OetuSnTjYF_uLe1_?usp=sharing, folder label_processing_example/
 
 ## Output files
-- metadata_slim.csv: reduced version of metadata.csv with only lines for which a composer could be extracted
+- id_composers.tsv: reduced version of metadata.csv with only lines for which a composer could be extracted
+  
 ## Summary
 Current label processing pipeline involves:
 - Producing set of clean labels from metadata 'composer' fields
@@ -21,6 +23,23 @@ Current label processing pipeline involves:
 
 
 ## How to run
+
+### Example execution
+```
+export DATA="../data/preprocessing_toy_example/"
+cp $DATA/metadata.csv .
+python3  parseMetadata.py
+cp id_composers.tsv $DATA/
+```
+
+Or 
+```
+export DATA="../data/preprocessing_toy_example/"
+cp $DATA/metadata.csv .
+```
+Then open labelInspect.ipynb notebook.
+### Details
+
 `$ python3 parseMetadata.py $ARGS`
 ``` 
 Args:
@@ -30,8 +49,8 @@ Args:
     -d, --deleted_to_csv to output strings for failed processing of alternative metadata fields
 
 Output file(s):
-    default: metadata_slim.csv
-    if -a: slim_all_fields_metadata.csv
+    default: id_composers.tsv
+    if -a: id_composers_all_fields.tsv
     if -t: ner_metadata.csv, metadata_slim_csv
     if -d: ner_metadata.csv, metadata_slim_csv ner_error_metadata.csv
 ```

@@ -1,4 +1,4 @@
-# Preprocessing pipeline
+# Preprocessing pipeline - not locally runnable
 
 ## Code files
 - tally.py
@@ -27,6 +27,15 @@ Format: ID,[composerTextList],[titleTextList], [DescriptionTextList]
 Format: ID,[original],[terminated], [converted], [features], [last_error]
 
 ## How to run
+
+### Example execution
+```
+export DATA="../data/preprocessing_toy_example/"
+python3  tally.py -s $DATA/mscz/ -j $DATA/json/  -c $DATA/converted_mscz/ -f $DATA/features/ -n 4 --file_name $DATA/tallied.csv
+python3  tally.py -s $DATA/mscz/ -j $DATA/json/  -c $DATA/converted_mscz/ -f $DATA/features/ -n 4 --composer_mode --file_name $DATA/composers_tallied.csv
+```
+### Details
+
 `$ python3 tally.py $ARGS`
 ``` 
 Args:

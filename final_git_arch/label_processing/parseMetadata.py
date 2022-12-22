@@ -21,8 +21,8 @@ def main(args):
         modelDict = initModelDict()
 
     csv_dir = os.path.abspath(args.csv_file)
-    slim_csv_dir = os.path.abspath('./slim_' + args.csv_file.lstrip('./'))
-    slim_all_csv_dir = os.path.abspath('./slim_all_fields_' + args.csv_file.lstrip('./'))
+    slim_csv_dir = os.path.abspath('./id_composers.tsv')
+    slim_all_csv_dir = os.path.abspath('./id_composers_all_fields.tsv')
     if parseAll: slim_csv_dir = slim_all_csv_dir
 
     if saveDel: deleted_csv_dir = os.path.abspath('./del_' + args.csv_file.lstrip('./'))
@@ -30,7 +30,7 @@ def main(args):
 
     #process large csv line by line
     with open(csv_dir) as f_in, open(slim_csv_dir, "w+") as f_out:
-        writer = csv.writer(f_out, delimiter=',', lineterminator='\n')
+        writer = csv.writer(f_out, delimiter='\t', lineterminator='\n')
         writer.writerow(["ID", "composer"])
         reader = csv.reader(fix_nulls(f_in), delimiter=",")
         if saveDel: f_out2 = open(deleted_csv_dir, "w+"); del_writer = csv.writer(f_out2, delimiter='\t', lineterminator='\n')  
