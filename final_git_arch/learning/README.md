@@ -1,7 +1,4 @@
-# ComposersClassifier
-Guessing the composer of a MuseScore file
-
-## Project Structure
+## Folder Structure
 ```
 .
 ├── README.md
@@ -37,6 +34,8 @@ Guessing the composer of a MuseScore file
     ├── dataset.py
     ├── generate_dataset.py
     ├── model.py
+    ├── plot_training_curves.py
+    ├── select_data.py
     ├── test_chance.py
     ├── test.py
     ├── train.py
@@ -56,11 +55,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Downloading data
+## Input data
+### Downloading from Drive
 To experiment on our datasets, please download them from:
 https://drive.google.com/drive/folders/1Fdby1B12gKPfIL31OetuSnTjYF_uLe1_?usp=sharing
 
 Then move and rename the zip files to the locations and names that are described in Project Structure section (data/CONFIG/notes.zip).
+
+### From the previous steps
+From the previous steps we have a features.zip folder. One may get a notes folder from this zip folder and a selection of id_composers.tsv using:
+```
+python3 src/select_data.py -f features.zip -o ../data/myDataset/ -i ../data/myDataset/id_composers.tsv
+```
+We recommend to zip the notes file for next steps.
 
 ## Usage
 ### Training

@@ -1,7 +1,7 @@
 num_classes: 10
 num_workers: 2
 random_seed: 1
-ids_folder: './data/full_unbalanced'
-csv_dir: './data/full_unbalanced'
+ids_folder: '../data/full_unbalanced'
+csv_dir: '../data/full_unbalanced'
 zipped: 1
-notes_zip_or_dir: './data/full_unbalanced/notes.zip'
+notes_zip_or_dir: '../data/full_unbalanced/notes.zip'

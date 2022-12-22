@@ -8,10 +8,10 @@ batch_size: 1
 num_workers: 2
 save_path: './checkpoints/full_unbalanced'
 load_checkpoint: ''
-ids_folder: './data/full_unbalanced'
-csv_dir: './data/full_unbalanced'
+ids_folder: '../data/full_unbalanced'
+csv_dir: '../data/full_unbalanced'
 zipped: 1
-notes_zip_or_dir: './data/full_unbalanced/notes.zip'
+notes_zip_or_dir: '../data/full_unbalanced/notes.zip'
 partial_dataset: -1
 cuda: 0
 random_seed: 1

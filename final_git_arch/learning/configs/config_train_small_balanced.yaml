@@ -8,10 +8,10 @@ batch_size: 1
 num_workers: 2
 save_path: './checkpoints/small_balanced'
 load_checkpoint: ''
-ids_folder: './data/small_balanced'
-csv_dir: './data/small_balanced'
+ids_folder: '../data/small_balanced'
+csv_dir: '../data/small_balanced'
 zipped: 1
-notes_zip_or_dir: './data/small_balanced/notes.zip'
+notes_zip_or_dir: '../data/small_balanced/notes.zip'
 partial_dataset: -1
 cuda: 0
 random_seed: 1

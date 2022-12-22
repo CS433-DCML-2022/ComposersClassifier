@@ -1,6 +1,7 @@
-//TODO: merge with prev readme
-## Contents
-//TODO update
+# ComposersClassifier
+Guessing the composer of a MuseScore file
+
+## Project Structure
 ```
 Project
 |  classifying_script: simple script using pre-trained model, classifying a given notes.tsv file (or folder with argument --folder)
@@ -8,20 +9,24 @@ Project
 |  learning_notebook: Python notebook running training on either balanced or unbalanced training set, and testing on test_set
 |
 └── data/
-|   └── TODO
-      ├── full_unbalanced
-          ├── ...
-      ├── max_balanced
-          ├── ...
-      ├── small_balanced
-          ├── ...
-      ├── small_unbalanced
-          ├── ...distribution
-|       |  ...
-|       └─    
-└── trained_models/
-|   |  binary save of trained models
-|   └─
+|   └── full_unbalanced
+|        └── ...
+|   └── max_balanced
+|        └──  ...
+|   └──  small_balanced
+|        └──  ...
+|   └──  small_unbalanced
+|        └──  ...
+└── conversion/
+|   └── ...
+└── label_processing/
+|   └── ...
+└── preprocessing/
+|   └── ...
+└── learning/
+|   └── ...
+└── results_analysis/
+|   └── ...
 └─
   ```
 

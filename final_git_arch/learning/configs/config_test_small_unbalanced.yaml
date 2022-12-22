@@ -3,8 +3,8 @@ delta: 32
 num_workers: 2
 save_path: './checkpoints/small_unbalanced'
 load_checkpoint: './trained_models/small_unbalanced.pt'
-ids_folder: './data/small_unbalanced'
-csv_dir: './data/small_unbalanced'
+ids_folder: '../data/small_unbalanced'
+csv_dir: '../data/small_unbalanced'
 zipped: 1
-notes_zip_or_dir: './data/small_unbalanced/notes.zip'
+notes_zip_or_dir: '../data/small_unbalanced/notes.zip'
 cuda: 0
