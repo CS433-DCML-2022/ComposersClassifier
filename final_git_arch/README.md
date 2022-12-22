@@ -47,5 +47,4 @@ Project
   python3 parseMetadata.py
   ```
   ## ...
-  ## Confusion matrix plotting
-  
+  ## Results analysis
