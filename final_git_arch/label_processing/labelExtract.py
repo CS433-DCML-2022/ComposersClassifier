@@ -48,7 +48,7 @@ def namedEntityRecognition(ID,stringToParse, modelDict , checkKnown=False, compo
     #if we dont have language - we cant recognize the proper nouns
     else: 
         # print("language model not available for query " + stringToParse.replace('\n', " ") + " in lang " + lang)
-        error_csv_writer.writerow([ID,lang, stringToParse.replace('\n', " ") ])
+        if error_csv_writer: error_csv_writer.writerow([ID,lang, stringToParse.replace('\n', " ") ])
 
         return None
 

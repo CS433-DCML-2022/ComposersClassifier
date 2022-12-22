@@ -17,7 +17,7 @@ def main(args):
     parseTextNER = args.text_fields
     parseAll = args.all_fields
 
-    if parseTextNER:
+    if parseTextNER or parseAll:
         modelDict = initModelDict()
 
     csv_dir = os.path.abspath(args.csv_file)
@@ -30,10 +30,10 @@ def main(args):
 
     #process large csv line by line
     with open(csv_dir) as f_in, open(slim_csv_dir, "w+") as f_out:
-        writer = csv.writer(f_out, delimiter=',', lineterminator='\n')
+        writer = csv.writer(f_out, delimiter=',', lineterminator='\n'); error_csv_writer =None
         reader = csv.reader(fix_nulls(f_in), delimiter=",")
         if saveDel: f_out2 = open(deleted_csv_dir, "w+"); del_writer = csv.writer(f_out2, delimiter='\t', lineterminator='\n')  
-        if parseTextNER or parseAll: f_out3 = open(ner_csv_dir,  "w+"); ner_writer = csv.writer(f_out3, delimiter='\t', lineterminator='\n');  f_out4 = open(error_csv_dir, "w+"); error_csv_writer = csv.writer(f_out4, delimiter='\t', lineterminator='\n');  
+        if parseTextNER : f_out3 = open(ner_csv_dir,  "w+"); ner_writer = csv.writer(f_out3, delimiter='\t', lineterminator='\n');  f_out4 = open(error_csv_dir, "w+"); error_csv_writer = csv.writer(f_out4, delimiter='\t', lineterminator='\n');  
         for line in reader:
             ID,composers = line[0],line[3].split(';')
             cleanComposers = [basic_clean(composer) for composer in composers]
@@ -53,13 +53,13 @@ def main(args):
                         if title:
                             titleEntities = namedEntityRecognition(ID," ".join(title), modelDict ,  checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
                             if titleEntities: titleEntities = [basic_clean(x, strict=True,initials=True) for x in titleEntities if x]; titleEntities = list(set(titleEntities))
-                            if titleEntities: titleEntities = "; ".join([x for x in titleEntities if x]).title()
+                            if titleEntities: titleEntities = "; ".join([x for x in titleEntities if x]).title(); #titleEntities = titleEntities.split("; ")[0]
                             if titleEntities and parseAll: writer.writerow([ID,titleEntities]); continue
                             else: titleEntities = None
                         if desc:
                             descEntities = namedEntityRecognition(ID," ".join(desc), modelDict , checkKnown=False, composersDict=None,composersList=None, error_csv_writer=error_csv_writer)
                             if descEntities: descEntities = [basic_clean(x, strict=True, initials=True) for x in descEntities if x]; descEntities = list(set(descEntities))
-                            if descEntities: descEntities = "; ".join([x for x in descEntities if x]).title()
+                            if descEntities: descEntities = "; ".join([x for x in descEntities if x]).title(); #descEntities = descEntities.split("; ")[0]
                             if descEntities and parseAll: writer.writerow([ID,descEntities]); continue
                             else: descEntities = None
                             

@@ -75,7 +75,6 @@ ParseMetadata.py will read the list of composers for each ID in metadata.csv. As
 
         iv) Comparison of string with a list of bad words. Bad words list was iteratively constructed from manual inspection of processing results. If the string is in the list of bad words, we remove it.
 
-
     j) String list is joined again with space delimiters
 
     k) Composer string is .stripped of all " ',.- " characters that may remain after removal of bad words and numbers.
@@ -109,6 +108,6 @@ Additional composers may be discovered by searching alternative user-provided me
 
     e) Identified entities are cleaned in the same procedure specified above, though strict filtering for entities with >=2 word names is recommended.
 
-List of composers is written in semicolon separated form, along with it's relevant ID, to the specified slim_metadata.csv directory. E.g. (5925434,K. Totaka)
+The list of composers in semicolon separated form, along with it's relevant ID, is written to the specified slim_all_fields_metadata.csv directory. E.g. (5925434,K. Totaka)
 
 Unless specified, only A-grade labels will be obtained by parseMetadata.py. Using additional fields hierarchically is optional. This will first attempt to use composer fields, followed by title and then finally description fields to find a valid composer. 
