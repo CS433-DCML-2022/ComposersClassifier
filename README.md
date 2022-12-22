@@ -1,5 +1,7 @@
 # ComposersClassifier - Guessing the composer of a MuseScore file
 
+Work conducted Jamie MICKAILL, Erwan UMLIL, Nathan PELUSO, in collaboration with the Digital & Cognitive Musicology Lab, EPFL.
+
 ## Project Structure
 ```
 ├── conversion
@@ -19,10 +21,8 @@
 ├── label_processing
 │   ├── labelExtract.py
 │   ├── labelInspect.ipynb
-│   ├── metadata.csv
 │   ├── parseMetadata.py
 │   ├── README.md
-│   └── slim_metadata.csv
 ├── learning
 │   ├── checkpoints
 │   │   ├── full_unbalanced
@@ -45,8 +45,8 @@
 └── results_analysis
     ├── README.md
     ├── results_analysis.ipynb
-    ├── unbalanced_train_heatmap.png
-    └── unbalanced_train_heatmap_unnormalized.png
+    ├── final_heatmap_balanced.png
+    └── final_heatmap_unbalanced.png
 ```
 
 
