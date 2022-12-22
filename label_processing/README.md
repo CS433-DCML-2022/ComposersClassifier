@@ -11,7 +11,7 @@
 
 ## Input files
 - metadata.csv: produced by tally.py as part of "Preprocessing" step
-Download the metadata.csv file from https://drive.google.com/drive/folders/1Fdby1B12gKPfIL31OetuSnTjYF_uLe1_?usp=sharing, folder label_processing_example/
+Download the metadata.csv file from https://drive.google.com/drive/folders/1Fdby1B12gKPfIL31OetuSnTjYF_uLe1_?usp=sharing, folder label_processing_example/, into ../data/label_processing_example/
 
 ## Output files
 - id_composers.tsv: reduced version of metadata.csv with only lines for which a composer could be extracted
@@ -26,7 +26,7 @@ Current label processing pipeline involves:
 
 ### Example execution
 ```
-export DATA="../data/preprocessing_toy_example/"
+export DATA="../data/label_processing_example/"
 cp $DATA/metadata.csv .
 python3  parseMetadata.py
 cp id_composers.tsv $DATA/
@@ -34,7 +34,7 @@ cp id_composers.tsv $DATA/
 
 Or 
 ```
-export DATA="../data/preprocessing_toy_example/"
+export DATA="../data/label_processing_example/"
 cp $DATA/metadata.csv .
 ```
 Then open labelInspect.ipynb notebook.

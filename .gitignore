@@ -129,7 +129,11 @@ dmypy.json
 .pyre/
 
 # Custom
+.DS_Store
 **/.ipynb_checkpoints
-**/*.csv
-**/*.tsv
+data/label_processing_example/metadata.csv
+data/*.csv
+data/*.tsv
+label_processing/*.csv
+label_processing/*.tsv
 **/*.mscz
