@@ -57,17 +57,26 @@ pip install -r requirements.txt
 
 ## Input data
 ### Downloading from Drive
-To experiment on our datasets, please download them from:
+To experiment on our real datasets, please download them from:
 https://drive.google.com/drive/folders/1Fdby1B12gKPfIL31OetuSnTjYF_uLe1_?usp=sharing
 
 Then move and rename the zip files to the locations and names that are described in Project Structure section (data/CONFIG/notes.zip).
 
+#### Datasets
+We provide four datasets:
+- full_unbalanced: all scores we have from the top 10 composers
+- max_balanced: as many scores as possible from the top 10 composers so that the dataset is balanced (same number of scores for each composer)
+- small_unbalanced: a small batch of scores that respects the proportions of the full dataset
+- small_balanced: a small balanced batch of scores
+
+To test the learning pipeline we recommend the reader to use a small dataset. The results we presented in the report were obtained using the biggest datasets.
+
 ### From the previous steps
-From the previous steps we have a features.zip folder. One may get a notes folder from this zip folder and a selection of id_composers.tsv using:
+From the previous steps we have a features as well as an id_composers.tsv file. One may get a notes folder from this zip folder and a selection of id_composers.tsv using:
 ```
 python3 src/select_data.py -f features.zip -o ../data/myDataset/ -i ../data/myDataset/id_composers.tsv
 ```
-We recommend to zip the notes file for next steps.
+We recommend to zip the notes file for next steps. Then move and rename the zip file to the locations and name that are described in Project Structure section (data/CONFIG/notes.zip).
 
 ## Usage
 ### Training

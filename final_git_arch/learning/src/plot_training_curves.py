@@ -20,18 +20,14 @@ def main(args):
 
     plt.figure(figsize=(6.4 * 3, 4.8))
     plt.subplot(1, 3, 1)
-    plt.plot(t_train, train_acc_history, label="Train")
-    plt.plot(t_val, val_acc_history, label="Val")
-    plt.legend()
+    plt.plot(t_val, val_acc_history)
     plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
+    plt.ylabel("Validation Accuracy")
 
     plt.subplot(1, 3, 2)
-    plt.plot(t_train, train_loss_history, label="Train")
-    plt.plot(t_val, val_loss_history, label="Val")
-    plt.legend()
+    plt.plot(t_val, val_loss_history)
     plt.xlabel("Epoch")
-    plt.ylabel("Loss")
+    plt.ylabel("Validation Loss")
 
     plt.subplot(1, 3, 3)
     plt.plot(t_train, lr_history)
