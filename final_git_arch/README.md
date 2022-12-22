@@ -43,7 +43,6 @@
 ├── project2_description.pdf
 ├── README.md
 └── results_analysis
-    ├── predictions.tsv
     ├── README.md
     ├── results_analysis.ipynb
     ├── unbalanced_train_heatmap.png
